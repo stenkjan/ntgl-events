@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --primary: #ab0e0e;
+  --primary-hover: #8b0000;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+}
+
+.btn-primary {
+  @apply bg-red-800 hover:bg-red-900 text-white font-bold py-2 px-4 rounded transition duration-200;
+}
+
+.input-field {
+  @apply w-full p-2 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:border-red-500 text-white;
+}
+
+.card {
+  @apply bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-xl p-6;
+}
