@@ -38,6 +38,7 @@ export default function Home() {
           <p>© 2025 NTGL. Alle Rechte vorbehalten.</p>
           <p className="mt-2">
             <a href="https://www.instagram.com/ntgl.at/" className="text-slate-400 hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">
+              <img src="/instagram_icon.png" alt="Instagram Icon" className="inline h-5 w-5 mr-2" />
               @ntgl.at
             </a>
           </p>
