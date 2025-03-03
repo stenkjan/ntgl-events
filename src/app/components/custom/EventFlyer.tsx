@@ -110,7 +110,7 @@ const EventFlyer: React.FC<EventFlyerProps> = ({
             <img
               src={imageUrl}
               alt="Event Flyer"
-              className="absolute top-0 left-0 w-full h-full object-contain rounded-lg"
+              className="absolute top-0 left-0 w-full h-full object-cover rounded-lg"
             />
           </div>
 
