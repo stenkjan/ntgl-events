@@ -1,68 +1,8 @@
 import React from 'react';
-import EventFlyer, { LineupItem, EventDetails } from '@/components/custom/EventFlyer';
+import EventFlyer from '@/components/custom/EventFlyer';
 import RegistrationForm from '@/components/custom/RegistrationForm';
 
 export default function Home() {
-  // You can customize the event details and lineup here if needed
-  const eventDetails: EventDetails = {
-    title: "NEXT EVENT < 21.03.2025 >",
-    subtitle: "NTGL @ GRNGR",
-    date: "Fr. 21.03.2025",
-    location: "📍Josefigasse 47, 8020 Graz",
-    additionalInfo: [
-      "🎟️ Musikspende: 10€",
-      "✅ Registrierung verpflichtend"
-    ]
-  };
-
-  const lineup: LineupItem[] = [
-    { 
-      time: "22:00 Uhr", 
-      artist: "MICHI K [ZSTRAD]", 
-      genre: "italo house EBM",
-      videoLinks: [
-        { url: "https://www.youtube.com/embed/T6ic2YgNZAw" },
-        { url: "https://www.youtube.com/embed/BsKbVeRc76g" },
-        { url: "https://www.youtube.com/embed/hjjusf1KgCg" }
-      ]
-    },
-    { 
-      time: "00:00 Uhr", 
-      artist: "RAINER GENUSS", 
-      genre: "Psytechno",
-      videoLinks: [
-        { url: "https://www.youtube.com/embed/kwZcROGLXpw" },
-        { url: "https://www.youtube.com/embed/gZluu2Ezwjs" },
-        { url: "https://www.youtube.com/embed/Koz8cKPqmxU" }
-      ]
-    },
-    { 
-      time: "01:30 Uhr", 
-      artist: "CI_RED", 
-      genre: "Peak Time Techno",
-      videoLinks: [
-        { url: "https://www.youtube.com/embed/fDLBmtgGMEY" },
-        { url: "https://www.youtube.com/embed/kYDiOm5aVNc" },
-        { url: "https://www.youtube.com/embed/Z8onIruTiIM" }
-      ]
-    },
-    { 
-      time: "03:00 Uhr", 
-      artist: "ALEX AGE", 
-      genre: "Peak Time/Hard Techno",
-      videoLinks: [
-        { url: "https://www.youtube.com/embed/7VzOnhmRBWQ" },
-        { url: "https://www.youtube.com/embed/T4q9chUDsxY" },
-        { url: "https://www.youtube.com/embed/LLih9wNlNCU" }
-      ]
-    },
-    { 
-      time: "04:30 Uhr", 
-      artist: "MAD AND EVIL", 
-      genre: "Melodic Techno" 
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white">
       {/* Static form for Netlify to detect - hidden from view */}
@@ -88,11 +28,7 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 pt-20">
-        <EventFlyer
-          imageUrl="/flyer.PNG"
-          lineup={lineup}
-          eventDetails={eventDetails}
-        />
+        <EventFlyer />
         <RegistrationForm />
       </main>
 

@@ -24,15 +24,20 @@ export interface EventDetails {
   price?: string;
 }
 
-export interface EventFlyerProps {
-  imageUrl?: string;
-  lineup?: LineupItem[];
-  eventDetails?: EventDetails;
-}
+const EventFlyer: React.FC = () => {
+  // Define event details and lineup directly within the component
+  const eventDetails: EventDetails = {
+    title: "NEXT EVENT < 21.03.2025 >",
+    subtitle: "NTGL @ GRNGR",
+    date: "Fr. 21.03.2025",
+    location: "📍Josefigasse 47, 8020 Graz",
+    additionalInfo: [
+      "🎟️ Musikspende: 10€",
+      "✅ Registrierung verpflichtend"
+    ]
+  };
 
-const EventFlyer: React.FC<EventFlyerProps> = ({
-  imageUrl = "/flyer.PNG",
-  lineup = [
+  const lineup: LineupItem[] = [
     { 
       time: "22:00 Uhr", 
       artist: "MICHI K [ZSTRAD]", 
@@ -78,19 +83,8 @@ const EventFlyer: React.FC<EventFlyerProps> = ({
       artist: "MAD AND EVIL", 
       genre: "Melodic Techno" 
     },
-  ],
-  eventDetails = {
-    title: "KONFERENZ DER TIERE",
-    subtitle: "GRNGR Hausball | anlässlich Valeries & Lisis Geburtstag.",
-    date: "Rosenmontag, 3. 3. 25",
-    location: "📍 GERINGER (EULE), 🛖Josefigasse 47, 8020 Graz",
-    dresscode: "Animalisch Schick (Oder: Als die Tiere den Ball verließen)",
-    additionalInfo: [
-      "Kulinarik von und mit den Cooks of Grind | Tombola & Glücksrad | Favelottis Champagnerschunkeln im Tanzpalast | Murphy Morphine | Thomas Rezina | Toni Talwärts"
-    ],
-    price: "Private Tanzveranstaltung. Wir bitten um 12 € Unkostenbeitrag für Musik, Show & Geburtstagskinder.⁩"
-  }
-}) => {
+  ];
+
   // State to track which artist's videos are expanded
   const [expandedArtist, setExpandedArtist] = useState<string | null>(null);
 
@@ -108,7 +102,7 @@ const EventFlyer: React.FC<EventFlyerProps> = ({
         <CardContent className="p-6">
           <div className="relative w-full aspect-w-16 aspect-h-9 bg-slate-700 rounded-lg mb-8 overflow-hidden">
             <img
-              src={imageUrl}
+              src="/flyer.PNG"
               alt="Event Flyer"
               className="absolute top-0 left-0 w-full h-full object-contain rounded-lg"
             />
