@@ -12,6 +12,7 @@
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.2",
     "@shadcn/ui": "^0.0.4",
+    "@tailwindcss/aspect-ratio": "^0.4.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "next": "15.1.7",
