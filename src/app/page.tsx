@@ -84,7 +84,7 @@ export default function Home() {
       {/* Main Content */}
       <main className="container mx-auto px-4 pt-20">
         <EventFlyer
-          imageUrl="/flyer.jpg"
+          imageUrl="/flyer.PNG"
           lineup={lineup}
           eventDetails={eventDetails}
         />
