@@ -104,7 +104,7 @@ const EventFlyer: React.FC = () => {
             <img
               src="/flyer.PNG"
               alt="Event Flyer"
-              className="absolute top-0 left-0 w-full h-full object-cover rounded-lg"
+              className="absolute top-0 left-0 w-full h-full object-fit rounded-lg"
             />
           </div>
 
