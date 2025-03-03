@@ -8,7 +8,7 @@ export default function Home() {
     title: "NEXT EVENT < 21.03.2025 >",
     subtitle: "NTGL @ GRNGR",
     date: "Fr. 21.03.2025",
-    location: "📍 GERINGER (EULE), 🛖Josefigasse 47, 8020 Graz",
+    location: "📍Josefigasse 47, 8020 Graz",
     additionalInfo: [
       "🎟️ Musikspende: 10€",
       "✅ Registrierung verpflichtend"
@@ -16,46 +16,51 @@ export default function Home() {
   };
 
   const lineup: LineupItem[] = [
-    {
-      time: "23:00 - 00:30",
-      artist: "LUCID DREAMER B2B CRUMBLE",
-      genre: "DnB",
+    { 
+      time: "22:00 Uhr", 
+      artist: "MICHI K [ZSTRAD]", 
+      genre: "italo house EBM",
       videoLinks: [
-        { url: "https://www.youtube.com/embed/xfLsoZd9fKw" },
-        { url: "https://www.youtube.com/embed/0E28wZu020I" },
-        { url: "https://www.youtube.com/embed/thzJPm8KwEU" }
+        { url: "https://www.youtube.com/embed/T6ic2YgNZAw" },
+        { url: "https://www.youtube.com/embed/BsKbVeRc76g" },
+        { url: "https://www.youtube.com/embed/hjjusf1KgCg" }
       ]
     },
-    {
-      time: "00:30 - 02:30",
-      artist: "ALEX AGE",
-      genre: "Hard Techno",
+    { 
+      time: "00:00 Uhr", 
+      artist: "RAINER GENUSS", 
+      genre: "Psytechno",
+      videoLinks: [
+        { url: "https://www.youtube.com/embed/kwZcROGLXpw" },
+        { url: "https://www.youtube.com/embed/gZluu2Ezwjs" },
+        { url: "https://www.youtube.com/embed/Koz8cKPqmxU" }
+      ]
+    },
+    { 
+      time: "01:30 Uhr", 
+      artist: "CI_RED", 
+      genre: "Peak Time Techno",
+      videoLinks: [
+        { url: "https://www.youtube.com/embed/fDLBmtgGMEY" },
+        { url: "https://www.youtube.com/embed/kYDiOm5aVNc" },
+        { url: "https://www.youtube.com/embed/Z8onIruTiIM" }
+      ]
+    },
+    { 
+      time: "03:00 Uhr", 
+      artist: "ALEX AGE", 
+      genre: "Peak Time/Hard Techno",
       videoLinks: [
         { url: "https://www.youtube.com/embed/7VzOnhmRBWQ" },
         { url: "https://www.youtube.com/embed/T4q9chUDsxY" },
         { url: "https://www.youtube.com/embed/LLih9wNlNCU" }
       ]
     },
-    {
-      time: "02:30 - 04:00",
-      artist: "KONSTI B2B ITEC",
-      genre: "Techno/Trance",
-      videoLinks: [
-        { url: "https://www.youtube.com/embed/TPiXZBrf4hI" },
-        { url: "https://www.youtube.com/embed/fkySGB_cxA8" },
-        { url: "https://www.youtube.com/embed/ykY-5DZS_Ok" }
-      ]
+    { 
+      time: "04:30 Uhr", 
+      artist: "MAD AND EVIL", 
+      genre: "Melodic Techno" 
     },
-    {
-      time: "04:00 - 05:30",
-      artist: "RAINER GENUSS",
-      genre: "Techno/Techhouse",
-      videoLinks: [
-        { url: "https://www.youtube.com/embed/kwZcROGLXpw" },
-        { url: "https://www.youtube.com/embed/gZluu2Ezwjs" },
-        { url: "https://www.youtube.com/embed/Koz8cKPqmxU" }
-      ]
-    }
   ];
 
   return (
@@ -71,7 +76,7 @@ export default function Home() {
       <header className="fixed w-full bg-transparent backdrop-blur-sm z-50 p-4">
         <nav className="container mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <img src="/ntgl_logo.png" alt="NTGL Logo" className="h-10" />
+            <img src="/ntgl_logo.png" alt="NTGL Logo" className="h-10 w-full filter invert" />
             <h1 className="text-2xl font-bold">NTGL</h1>
           </div>
           <div className="space-x-4">

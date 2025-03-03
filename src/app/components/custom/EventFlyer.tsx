@@ -31,7 +31,7 @@ export interface EventFlyerProps {
 }
 
 const EventFlyer: React.FC<EventFlyerProps> = ({
-  imageUrl = "/flyer.jpg",
+  imageUrl = "/flyer.PNG",
   lineup = [
     { 
       time: "22:00 Uhr", 
@@ -137,7 +137,7 @@ const EventFlyer: React.FC<EventFlyerProps> = ({
                     </p>
                     {item.videoLinks && (
                       <span className="text-blue-400">
-                        {expandedArtist === item.artist ? '▲ Hide Videos' : '▼ Show Videos'}
+                        {expandedArtist === item.artist ? '▲ Hide Preview' : '▼ Show Preview'}
                       </span>
                     )}
                   </div>
