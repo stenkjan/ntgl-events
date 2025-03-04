@@ -123,14 +123,16 @@ const EventFlyer: React.FC = () => {
               {lineup.map((item, index) => (
                 <div key={index} className="lineup-item">
                   <div
-                    className="flex flex-col justify-between items-start cursor-pointer hover:bg-slate-700 p-2 rounded transition-colors"
+                    className="flex justify-between items-start cursor-pointer hover:bg-slate-700 p-2 rounded transition-colors"
                     onClick={() => item.videoLinks && toggleVideos(item.artist)}
                   >
-                    <p className="text-lg">{item.time}</p>
-                    <p className="text-lg font-bold">{item.artist}</p>
-                    {item.genre && <p className="text-lg">{item.genre}</p>}
+                    <div className="flex flex-col">
+                      <p className="text-lg">{item.time}</p>
+                      <p className="text-lg font-bold">{item.artist}</p>
+                      {item.genre && <p className="text-lg">{item.genre}</p>}
+                    </div>
                     {item.videoLinks && (
-                      <span className="text-blue-400">
+                      <span className="text-blue-400 ml-4">
                         {expandedArtist === item.artist ? '▲ Hide Preview' : '▼ Show Preview'}
                       </span>
                     )}
