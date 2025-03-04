@@ -16,7 +16,7 @@ export default function Home() {
       <header className="fixed w-full bg-transparent backdrop-blur-sm z-50 p-4">
         <nav className="container mx-auto flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="flex items-center space-x-4">
-            <img src="/ntgl_logo.png" alt="NTGL Logo" className="h-10 w-full filter invert" />
+            <img src="/ntgl_logo.png" alt="NTGL Logo" className="h-10 max-w-xs filter invert" />
             <h1 className="text-2xl font-bold">NTGL</h1>
           </div>
           <div className="flex space-x-4">
