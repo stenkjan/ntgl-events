@@ -81,7 +81,7 @@ const EventFlyer: React.FC = () => {
     {
       time: "04:30 Uhr",
       artist: "MAD AND EVIL",
-      genre: "Melodic Techno"
+      genre: "Deep Hypnotic Hardgroove"
     },
   ];
 
