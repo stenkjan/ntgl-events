@@ -38,9 +38,9 @@ const EventFlyer: React.FC = () => {
   };
 
   const lineup: LineupItem[] = [
-    { 
-      time: "22:00 Uhr", 
-      artist: "MICHI K [ZSTRAD]", 
+    {
+      time: "22:00 Uhr",
+      artist: "MICHI K [ZSTRAD]",
       genre: "italo house EBM",
       videoLinks: [
         { url: "https://www.youtube.com/embed/T6ic2YgNZAw" },
@@ -48,9 +48,9 @@ const EventFlyer: React.FC = () => {
         { url: "https://www.youtube.com/embed/hjjusf1KgCg" }
       ]
     },
-    { 
-      time: "00:00 Uhr", 
-      artist: "RAINER GENUSS", 
+    {
+      time: "00:00 Uhr",
+      artist: "RAINER GENUSS",
       genre: "Psytechno",
       videoLinks: [
         { url: "https://www.youtube.com/embed/kwZcROGLXpw" },
@@ -58,9 +58,9 @@ const EventFlyer: React.FC = () => {
         { url: "https://www.youtube.com/embed/Koz8cKPqmxU" }
       ]
     },
-    { 
-      time: "01:30 Uhr", 
-      artist: "CI_RED", 
+    {
+      time: "01:30 Uhr",
+      artist: "CI_RED",
       genre: "Peak Time Techno",
       videoLinks: [
         { url: "https://www.youtube.com/embed/fDLBmtgGMEY" },
@@ -68,9 +68,9 @@ const EventFlyer: React.FC = () => {
         { url: "https://www.youtube.com/embed/Z8onIruTiIM" }
       ]
     },
-    { 
-      time: "03:00 Uhr", 
-      artist: "ALEX AGE", 
+    {
+      time: "03:00 Uhr",
+      artist: "ALEX AGE",
       genre: "Peak Time/Hard Techno",
       videoLinks: [
         { url: "https://www.youtube.com/embed/7VzOnhmRBWQ" },
@@ -78,10 +78,10 @@ const EventFlyer: React.FC = () => {
         { url: "https://www.youtube.com/embed/LLih9wNlNCU" }
       ]
     },
-    { 
-      time: "04:30 Uhr", 
-      artist: "MAD AND EVIL", 
-      genre: "Melodic Techno" 
+    {
+      time: "04:30 Uhr",
+      artist: "MAD AND EVIL",
+      genre: "Melodic Techno"
     },
   ];
 
@@ -100,7 +100,7 @@ const EventFlyer: React.FC = () => {
     <section className="mb-12 pt-8">
       <Card className="bg-slate-800 border-none shadow-xl lg:scale-90 xl:scale-70">
         <CardContent className="p-6">
-          <div className="relative w-full aspect-w-16 aspect-h-9 bg-slate-700 rounded-lg mb-8 overflow-hidden">
+          <div className="relative w-full aspect-w-2 aspect-h-1 bg-slate-700 rounded-lg mb-8 overflow-hidden">
             <img
               src="/flyer.PNG"
               alt="Event Flyer"
@@ -122,20 +122,20 @@ const EventFlyer: React.FC = () => {
             <div className="space-y-8 font-mono">
               {lineup.map((item, index) => (
                 <div key={index} className="lineup-item">
-                  <div 
+                  <div
                     className="flex justify-between items-center cursor-pointer hover:bg-slate-700 p-2 rounded transition-colors"
                     onClick={() => item.videoLinks && toggleVideos(item.artist)}
                   >
-                    <p className="text-lg">
-                      {item.time} | <span className="font-bold">{item.artist}</span> {item.genre && `| ${item.genre}`}
-                    </p>
+                    <p className="text-lg">{item.time}</p>
+                    <p className="text-lg font-bold">{item.artist}</p>
+                    {item.genre && <p className="text-lg">{item.genre}</p>}
                     {item.videoLinks && (
                       <span className="text-blue-400">
                         {expandedArtist === item.artist ? '▲ Hide Preview' : '▼ Show Preview'}
                       </span>
                     )}
                   </div>
-                  
+
                   {/* Video links section */}
                   {item.videoLinks && expandedArtist === item.artist && (
                     <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 transition-all duration-300 ease-in-out">
