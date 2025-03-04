@@ -100,7 +100,7 @@ const EventFlyer: React.FC = () => {
     <section className="mb-12 pt-8">
       <Card className="bg-slate-800 border-none shadow-xl lg:scale-90 xl:scale-70">
         <CardContent className="p-6">
-          <div className="relative w-full aspect-w-2 aspect-h-1 bg-slate-700 rounded-lg mb-8 overflow-hidden">
+          <div className="relative w-full aspect-w-16 aspect-h-10 bg-slate-700 rounded-lg mb-8 overflow-hidden">
             <img
               src="/flyer.PNG"
               alt="Event Flyer"
