@@ -123,7 +123,7 @@ const EventFlyer: React.FC = () => {
               {lineup.map((item, index) => (
                 <div key={index} className="lineup-item">
                   <div
-                    className="flex justify-between items-center cursor-pointer hover:bg-slate-700 p-2 rounded transition-colors"
+                    className="flex flex-col justify-between items-start cursor-pointer hover:bg-slate-700 p-2 rounded transition-colors"
                     onClick={() => item.videoLinks && toggleVideos(item.artist)}
                   >
                     <p className="text-lg">{item.time}</p>
