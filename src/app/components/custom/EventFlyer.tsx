@@ -163,7 +163,7 @@ const EventFlyer: React.FC = () => {
           {/* Tanzpalast Info */}
           {eventDetails.additionalInfo && eventDetails.additionalInfo.length > 0 && (
             <div className="text-white space-y-2 mb-8">
-              <h2 className="text-2xl font-bold mb-4">Tanzpalast</h2>
+              <h2 className="text-2xl font-bold mb-4">Info</h2>
               {eventDetails.additionalInfo.map((info, index) => (
                 <p key={index}>{info}</p>
               ))}
