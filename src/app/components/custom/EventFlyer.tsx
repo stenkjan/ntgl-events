@@ -70,18 +70,23 @@ const EventFlyer: React.FC = () => {
     },
     {
       time: "03:00 Uhr",
-      artist: "ALEX AGE",
-      genre: "Peak Time/Hard Techno",
+      artist: "THOMMY COCONUT",
+      genre: "Hardgroove",
       videoLinks: [
-        { url: "https://www.youtube.com/embed/7VzOnhmRBWQ" },
-        { url: "https://www.youtube.com/embed/T4q9chUDsxY" },
-        { url: "https://www.youtube.com/embed/LLih9wNlNCU" }
+        { url: "https://www.youtube.com/embed/YZ-7GpS7ZYo" },
+        { url: "https://www.youtube.com/embed/fFHvc9aZ6PA" },
+        { url: "https://www.youtube.com/embed/RbwJuHcVCyk" }
       ]
     },
     {
       time: "04:30 Uhr",
       artist: "MAD AND EVIL",
-      genre: "Deep Hypnotic Hardgroove"
+      genre: "Deep Hypnotic Hardgroove",
+      videoLinks: [
+        { url: "https://www.youtube.com/embed/yzMTGEKI2b8" },
+        { url: "https://www.youtube.com/embed/pEmBsLNpnJo" },
+        { url: "https://www.youtube.com/embed/JWjk-wMvOoM" }
+      ]
     },
   ];
 
@@ -102,7 +107,7 @@ const EventFlyer: React.FC = () => {
         <CardContent className="p-6">
           <div className="relative w-full aspect-w-1 aspect-h-1 bg-slate-700 rounded-lg mb-8 overflow-hidden">
             <img
-              src="/flyer.PNG"
+              src="/flyer.jpeg"
               alt="Event Flyer"
               className="absolute top-0 left-0 w-full h-full object-fit rounded-lg"
             />
