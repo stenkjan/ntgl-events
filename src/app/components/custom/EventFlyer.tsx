@@ -71,7 +71,7 @@ const EventFlyer: React.FC = () => {
     {
       time: "03:00 Uhr",
       artist: "THOMMY COCONUT",
-      genre: "Hardgroove",
+      genre: "Tribal Techno",
       videoLinks: [
         { url: "https://www.youtube.com/embed/YZ-7GpS7ZYo" },
         { url: "https://www.youtube.com/embed/fFHvc9aZ6PA" },
