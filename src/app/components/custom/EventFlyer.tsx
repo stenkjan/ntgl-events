@@ -41,11 +41,11 @@ const EventFlyer: React.FC = () => {
     {
       time: "22:00 Uhr",
       artist: "TURBOTHURNER",
-      genre: "italo house EBM",
+      genre: "Progressive House",
       videoLinks: [
-        { url: "https://www.youtube.com/embed/T6ic2YgNZAw" },
-        { url: "https://www.youtube.com/embed/BsKbVeRc76g" },
-        { url: "https://www.youtube.com/embed/hjjusf1KgCg" }
+        { url: "https://www.youtube.com/embed/OylM4VvRfhY" },
+        { url: "https://www.youtube.com/embed/eGnstvOhOds" },
+        { url: "https://www.youtube.com/embed/nn3JB_L2WRY" }
       ]
     },
     {
