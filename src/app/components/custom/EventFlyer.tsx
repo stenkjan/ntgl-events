@@ -40,7 +40,7 @@ const EventFlyer: React.FC = () => {
   const lineup: LineupItem[] = [
     {
       time: "22:00 Uhr",
-      artist: "MICHI K [ZSTRAD]",
+      artist: "TURBOTHURNER",
       genre: "italo house EBM",
       videoLinks: [
         { url: "https://www.youtube.com/embed/T6ic2YgNZAw" },
