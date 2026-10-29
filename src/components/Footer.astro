@@ -1,0 +1,25 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-fog-800/60">
+  <div class="container-narrow flex flex-col gap-6 py-10 text-sm text-fog sm:flex-row sm:items-center sm:justify-between">
+    <div class="flex items-center gap-3">
+      <img src="/ntgl_logo.png" alt="" width="28" height="28" class="h-7 w-7 invert mix-blend-screen" />
+      <span>© {year} NTGL, Graz</span>
+    </div>
+    <nav class="flex flex-wrap gap-x-6 gap-y-2" aria-label="Rechtliches und Kontakt">
+      <a
+        href="https://www.instagram.com/ntgl.at/"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="transition hover:text-white"
+      >
+        @ntgl.at
+      </a>
+      <a href="mailto:info.ntgl@proton.me" class="transition hover:text-white">info.ntgl@proton.me</a>
+      <a href="/datenschutz" class="transition hover:text-white">Datenschutz</a>
+      <a href="/impressum" class="transition hover:text-white">Impressum</a>
+    </nav>
+  </div>
+</footer>

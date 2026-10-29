@@ -1,0 +1,85 @@
+---
+import { formatDate, formatMonth, isoDate, type EventEntry } from '../lib/events';
+
+interface Props {
+  event: EventEntry;
+  isPast: boolean;
+}
+const { event, isPast } = Astro.props;
+const d = event.data;
+
+const dateLabel = d.dateConfirmed ? formatDate(d.date) : `${formatMonth(d.date)}, Datum folgt`;
+const timeLabel = d.end ? `${d.doors} bis ${d.end} Uhr` : `ab ${d.doors} Uhr`;
+const registration = isPast ? 'closed' : d.registration;
+---
+
+<section id="top" class="bg-fog-haze">
+  <div class="container-narrow grid gap-10 py-14 sm:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+    <div>
+      <p
+        class="mb-5 inline-flex items-center gap-2 rounded-full border border-fog-700 bg-ink-800/70 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-fog"
+      >
+        <span class="h-1.5 w-1.5 rounded-full bg-signal"></span>
+        {isPast ? 'Letzte Party' : 'Nächste Party'}
+      </p>
+
+      <h1 class="text-display text-[2.6rem] text-white [overflow-wrap:anywhere] sm:text-7xl lg:text-8xl">{d.title}</h1>
+      {d.subtitle && <p class="text-display mt-2 text-3xl text-fog sm:text-4xl">{d.subtitle}</p>}
+
+      <dl class="mt-8 grid gap-5 sm:grid-cols-2">
+        <div>
+          <dt class="text-xs uppercase tracking-widest text-fog">Wann</dt>
+          <dd class="mt-1 text-lg font-medium text-white">
+            <time datetime={isoDate(d.date)}>{dateLabel}</time>
+            <span class="block text-base font-normal text-fog-300">{timeLabel}</span>
+          </dd>
+        </div>
+        <div>
+          <dt class="text-xs uppercase tracking-widest text-fog">Wo</dt>
+          <dd class="mt-1 text-lg font-medium text-white">
+            {d.location.name}
+            {
+              d.location.mapsUrl ? (
+                <a
+                  href={d.location.mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="block text-base font-normal text-fog-300 underline decoration-fog-700 underline-offset-4 hover:text-white"
+                >
+                  {d.location.address}
+                </a>
+              ) : (
+                <span class="block text-base font-normal text-fog-300">{d.location.address}</span>
+              )
+            }
+          </dd>
+        </div>
+      </dl>
+
+      {d.price && <p class="mt-6 text-fog-300">{d.price}</p>}
+
+      <div class="mt-8 flex flex-wrap gap-3">
+        {registration === 'open' && <a href="#anmeldung" class="btn-primary">Jetzt anmelden</a>}
+        {registration === 'soon' && <span class="btn-ghost cursor-default">Anmeldung öffnet bald</span>}
+        {registration === 'closed' && <span class="btn-ghost cursor-default">Anmeldung geschlossen</span>}
+        <a href="#lineup" class="btn-ghost">Line-up</a>
+      </div>
+    </div>
+
+    {
+      d.flyer && (
+        <figure class="mx-auto w-full max-w-md lg:max-w-none">
+          <img
+            src={d.flyer}
+            alt={d.flyerAlt ?? 'Flyer'}
+            width="1200"
+            height="1200"
+            class="aspect-square w-full rounded-2xl object-cover shadow-2xl shadow-black/60 ring-1 ring-fog-700/60"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </figure>
+      )
+    }
+  </div>
+</section>

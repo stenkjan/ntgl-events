@@ -1,0 +1,60 @@
+---
+import type { EventEntry } from '../lib/events';
+
+interface Props {
+  items: EventEntry['data']['lineup'];
+}
+const { items } = Astro.props;
+---
+
+<section id="lineup" class="border-t border-fog-800/60">
+  <div class="container-narrow py-14 sm:py-20">
+    <div class="mb-8 flex items-end justify-between gap-4">
+      <h2 class="text-display text-5xl text-white sm:text-6xl">Line-up</h2>
+      {items.length > 0 && <p class="text-sm text-fog">Zeiten können sich ändern</p>}
+    </div>
+
+    {
+      items.length === 0 ? (
+        <p class="rounded-2xl border border-dashed border-fog-700 p-8 text-center text-fog-300">
+          Line-up folgt. Folge uns auf
+          <a
+            href="https://www.instagram.com/ntgl.at/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-white underline decoration-fog-700 underline-offset-4 hover:decoration-signal"
+          >
+            Instagram
+          </a>
+          , dann verpasst du nichts.
+        </p>
+      ) : (
+        <ol class="divide-y divide-fog-800/80 overflow-hidden rounded-2xl border border-fog-800/80 bg-ink-800/50">
+          {items.map((item) => (
+            <li class="grid gap-2 p-5 sm:grid-cols-[7rem_1fr_auto] sm:items-center sm:gap-6">
+              <span class="font-mono text-sm text-fog">{item.time ?? ''}</span>
+              <div>
+                <p class="text-display text-3xl text-white">{item.artist}</p>
+                {item.genre && <p class="text-sm text-fog-300">{item.genre}</p>}
+              </div>
+              {item.links.length > 0 && (
+                <div class="flex flex-wrap gap-2">
+                  {item.links.map((l) => (
+                    <a
+                      href={l.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="rounded-full border border-fog-700 px-3 py-1 text-xs font-medium text-fog-100 transition hover:border-fog hover:bg-ink-700"
+                    >
+                      {l.label}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </li>
+          ))}
+        </ol>
+      )
+    }
+  </div>
+</section>
