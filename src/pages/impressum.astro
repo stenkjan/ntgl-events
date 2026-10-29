@@ -1,0 +1,53 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Base title="Impressum | NTGL" description="Impressum und Offenlegung für ntgl.at.">
+  <Nav compact />
+  <main class="flex-1">
+    <article class="container-narrow prose-ntgl max-w-3xl py-14 sm:py-20">
+      <h1>Impressum</h1>
+      <p>Informationspflicht laut § 5 E-Commerce-Gesetz und Offenlegung laut § 25 Mediengesetz.</p>
+
+      <h2>Veranstalter und Medieninhaber</h2>
+      <p>
+        <mark>[Name des Veranstalters bzw. der Veranstalterin]</mark><br />
+        <mark>[Straße und Hausnummer]</mark><br />
+        <mark>[PLZ und Ort]</mark>, Österreich<br />
+        E-Mail: <a href="mailto:info.ntgl@proton.me">info.ntgl@proton.me</a><br />
+        Instagram: <a href="https://www.instagram.com/ntgl.at/" target="_blank" rel="noopener noreferrer">@ntgl.at</a>
+      </p>
+
+      <h2>Grundlegende Richtung</h2>
+      <p>
+        ntgl.at informiert über private Musikveranstaltungen der NTGL-Reihe in Graz und ermöglicht die Anmeldung
+        dazu. Die Veranstaltungen sind nicht gewinnorientiert; die Musikspende dient der Kostendeckung.
+      </p>
+
+      <h2>Haftung für Inhalte</h2>
+      <p>
+        Wir erstellen die Inhalte dieser Website mit Sorgfalt, übernehmen aber keine Gewähr für Richtigkeit,
+        Vollständigkeit und Aktualität. Termine, Line-up und Ablauf können sich kurzfristig ändern.
+      </p>
+
+      <h2>Haftung für Links</h2>
+      <p>
+        Diese Website enthält Links zu externen Websites, auf deren Inhalte wir keinen Einfluss haben. Für diese
+        Inhalte ist ausschließlich der jeweilige Anbieter verantwortlich. Wenn dir ein rechtswidriger Link
+        auffällt, schreib uns bitte; wir entfernen ihn umgehend.
+      </p>
+
+      <h2>Urheberrecht</h2>
+      <p>
+        Logo, Flyer, Texte und Fotos auf dieser Website sind urheberrechtlich geschützt. Eine Verwendung außerhalb
+        der Bewerbung unserer Veranstaltungen bedarf unserer Zustimmung.
+      </p>
+
+      <h2>Datenschutz</h2>
+      <p>Siehe <a href="/datenschutz">Datenschutzerklärung</a>.</p>
+    </article>
+  </main>
+  <Footer />
+</Base>

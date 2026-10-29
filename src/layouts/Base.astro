@@ -1,0 +1,52 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  noindex?: boolean;
+}
+
+const {
+  title = 'NTGL',
+  description = 'NTGL: Techno, Trance und Bounce im GRNGR in Graz. Private Partys, Anmeldung verpflichtend.',
+  image = '/flyers/2025-03-21.jpeg',
+  noindex = false,
+} = Astro.props;
+
+const site = Astro.site ?? new URL('https://ntgl.at');
+const canonical = new URL(Astro.url.pathname, site);
+const ogImage = new URL(image, site);
+---
+
+<!doctype html>
+<html lang="de" class="bg-ink">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="icon" type="image/png" href="/ntgl_logo.png" />
+    <link rel="apple-touch-icon" href="/ntgl_logo.png" />
+    <meta name="theme-color" content="#0b0f10" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="NTGL" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="flex min-h-dvh flex-col">
+    <slot />
+  </body>
+</html>

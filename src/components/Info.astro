@@ -1,0 +1,30 @@
+---
+interface Props {
+  notes: string[];
+}
+const { notes } = Astro.props;
+---
+
+<section id="info" class="border-t border-fog-800/60">
+  <div class="container-narrow grid gap-10 py-14 sm:py-20 lg:grid-cols-[0.9fr_1.1fr]">
+    <div>
+      <h2 class="text-display text-5xl text-white sm:text-6xl">Info</h2>
+      <div class="mt-6 space-y-4 text-lg leading-relaxed text-fog-300">
+        <slot />
+      </div>
+    </div>
+
+    {
+      notes.length > 0 && (
+        <ul class="grid gap-3 self-start">
+          {notes.map((n) => (
+            <li class="flex gap-3 rounded-xl border border-fog-800/80 bg-ink-800/50 p-4 text-fog-100">
+              <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-signal" aria-hidden="true" />
+              <span>{n}</span>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </div>
+</section>

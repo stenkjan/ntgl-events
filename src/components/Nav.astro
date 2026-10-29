@@ -1,0 +1,50 @@
+---
+interface Props {
+  /** Anker-Links nur auf der Startseite anzeigen */
+  compact?: boolean;
+}
+const { compact = false } = Astro.props;
+
+const links = [
+  { href: '/#lineup', label: 'Line-up' },
+  { href: '/#info', label: 'Info' },
+  { href: '/#anmeldung', label: 'Anmeldung' },
+];
+---
+
+<header class="sticky top-0 z-50 border-b border-fog-800/60 bg-ink/75 backdrop-blur-md">
+  <nav class="container-narrow flex h-16 items-center justify-between" aria-label="Hauptnavigation">
+    <a href="/#top" class="flex items-center gap-3" aria-label="NTGL Startseite">
+      <img src="/ntgl_logo.png" alt="" width="36" height="36" class="h-9 w-9 invert mix-blend-screen" />
+      <span class="text-display text-2xl text-fog-100">NTGL</span>
+    </a>
+    <div class="flex items-center gap-1 sm:gap-2">
+      {
+        !compact &&
+          links.map((l) => (
+            <a
+              href={l.href}
+              class="hidden rounded-md px-3 py-2 text-sm font-medium text-fog-300 transition hover:bg-ink-700 hover:text-white sm:inline-block"
+            >
+              {l.label}
+            </a>
+          ))
+      }
+      <a
+        href="https://www.instagram.com/ntgl.at/"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="rounded-md p-2 text-fog-300 transition hover:bg-ink-700 hover:text-white"
+        aria-label="NTGL auf Instagram"
+      >
+        <img src="/instagram_icon.png" alt="" width="20" height="20" class="h-5 w-5 invert" />
+      </a>
+      <a
+        href="/#anmeldung"
+        class="ml-1 inline-flex items-center rounded-full bg-signal px-4 py-2 text-sm font-bold text-white transition hover:bg-signal-600"
+      >
+        Anmelden
+      </a>
+    </div>
+  </nav>
+</header>

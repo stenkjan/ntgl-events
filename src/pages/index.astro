@@ -1,0 +1,46 @@
+---
+import { render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Hero from '../components/Hero.astro';
+import Lineup from '../components/Lineup.astro';
+import Info from '../components/Info.astro';
+import RegisterForm from '../components/RegisterForm.astro';
+import Footer from '../components/Footer.astro';
+import { pickCurrentEvent, formatDateShort } from '../lib/events';
+
+const { event, isPast } = await pickCurrentEvent();
+const Content = event ? (await render(event)).Content : null;
+
+const eventLabel = event
+  ? `${event.data.title}${event.data.dateConfirmed ? ` (${formatDateShort(event.data.date)})` : ''}`
+  : 'NTGL';
+const title = event ? `${event.data.title} | NTGL` : 'NTGL';
+const description = event
+  ? `${event.data.title}${event.data.subtitle ? `, ${event.data.subtitle}` : ''} im ${event.data.location.name}, ${event.data.location.address}. Anmeldung verpflichtend.`
+  : undefined;
+---
+
+<Base title={title} description={description} image={event?.data.flyer}>
+  <Nav />
+  <main class="flex-1">
+    {
+      event ? (
+        <>
+          <Hero event={event} isPast={isPast} />
+          <Lineup items={event.data.lineup} />
+          <Info notes={event.data.notes}>{Content && <Content />}</Info>
+          <RegisterForm eventLabel={eventLabel} status={isPast ? 'closed' : event.data.registration} />
+        </>
+      ) : (
+        <section class="bg-fog-haze">
+          <div class="container-narrow py-24 text-center">
+            <h1 class="text-display text-7xl text-white">NTGL</h1>
+            <p class="mt-4 text-fog-300">Die nächste Party folgt. Bis dahin: @ntgl.at auf Instagram.</p>
+          </div>
+        </section>
+      )
+    }
+  </main>
+  <Footer />
+</Base>

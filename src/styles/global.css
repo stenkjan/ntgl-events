@@ -1,0 +1,176 @@
+@import "tailwindcss";
+
+/*
+  NTGL Farbschema (3 Farben):
+  - ink    #0b0f10  Tinte/Nacht: Hintergrund, aus Logo und Flyer-Schwarz
+  - fog    #8fa9a7  Nebel-Türkis: aus dem Flyer-Hintergrund, Sekundärtext, Flächen
+  - signal #d7263d  Signalrot: Handlungsaufforderungen, Akzent (modernisiertes #ab0e0e der alten Seite)
+*/
+@theme {
+  --color-ink: #0b0f10;
+  --color-ink-800: #141a1b;
+  --color-ink-700: #1c2527;
+
+  --color-fog: #8fa9a7;
+  --color-fog-100: #e8eeed;
+  --color-fog-300: #c3d0ce;
+  --color-fog-500: #8fa9a7;
+  --color-fog-700: #3a4b4a;
+  --color-fog-800: #22312f;
+
+  --color-signal: #d7263d;
+  --color-signal-300: #f06a7b;
+  --color-signal-600: #b41d31;
+
+  --font-display: "Bebas Neue", Impact, "Arial Narrow", sans-serif;
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+  body {
+    background-color: var(--color-ink);
+    color: var(--color-fog-100);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background-color: var(--color-signal);
+    color: #fff;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-signal);
+    outline-offset: 2px;
+  }
+}
+
+@utility container-narrow {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 72rem;
+  padding-inline: 1.25rem;
+  @media (width >= 40rem) {
+    padding-inline: 2rem;
+  }
+}
+
+/* Nebel-Hintergrund wie am Flyer: zwei weiche Lichtquellen in Türkisgrau */
+@utility bg-fog-haze {
+  background-color: var(--color-ink);
+  background-image:
+    radial-gradient(60rem 40rem at 85% -10%, color-mix(in oklab, var(--color-fog) 28%, transparent), transparent 70%),
+    radial-gradient(50rem 36rem at -10% 60%, color-mix(in oklab, var(--color-fog-700) 55%, transparent), transparent 70%);
+}
+
+@utility text-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+  line-height: 0.92;
+}
+
+@utility btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background-color: var(--color-signal);
+  padding: 0.85rem 1.6rem;
+  font-weight: 700;
+  color: #fff;
+  transition: background-color 150ms ease, transform 150ms ease;
+  &:hover {
+    background-color: var(--color-signal-600);
+  }
+  &:active {
+    transform: translateY(1px);
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+}
+
+@utility btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-fog-700);
+  padding: 0.85rem 1.6rem;
+  font-weight: 500;
+  color: var(--color-fog-100);
+  transition: border-color 150ms ease, background-color 150ms ease;
+  &:hover {
+    border-color: var(--color-fog);
+    background-color: var(--color-ink-800);
+  }
+}
+
+@utility field {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-fog-700);
+  background-color: var(--color-ink);
+  padding: 0.8rem 1rem;
+  color: var(--color-fog-100);
+  &::placeholder {
+    color: color-mix(in oklab, var(--color-fog) 70%, transparent);
+  }
+  &:focus {
+    border-color: var(--color-fog);
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-fog) 25%, transparent);
+  }
+}
+
+/* Fließtext auf Datenschutz/Impressum */
+@utility prose-ntgl {
+  & h1 {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    line-height: 1;
+    color: #fff;
+    margin-bottom: 1.5rem;
+  }
+  & h2 {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    letter-spacing: 0.02em;
+    color: #fff;
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+  & p,
+  & li {
+    color: var(--color-fog-300);
+    line-height: 1.65;
+  }
+  & p + p {
+    margin-top: 0.75rem;
+  }
+  & ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+    margin-top: 0.5rem;
+  }
+  & a {
+    color: #fff;
+    text-decoration: underline;
+    text-decoration-color: var(--color-fog-700);
+    text-underline-offset: 4px;
+  }
+  & a:hover {
+    text-decoration-color: var(--color-signal);
+  }
+  & mark {
+    background-color: color-mix(in oklab, var(--color-signal) 30%, transparent);
+    color: #fff;
+    padding: 0 0.25rem;
+    border-radius: 0.25rem;
+  }
+}

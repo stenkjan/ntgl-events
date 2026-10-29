@@ -1,0 +1,100 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+
+const stand = '30.10.2026';
+---
+
+<Base title="Datenschutz | NTGL" description="Datenschutzerklärung für die Anmeldung zu NTGL-Veranstaltungen.">
+  <Nav compact />
+  <main class="flex-1">
+    <article class="container-narrow prose-ntgl max-w-3xl py-14 sm:py-20">
+      <h1>Datenschutzerklärung</h1>
+      <p>
+        Wir nehmen den Schutz deiner Daten ernst. Diese Erklärung beschreibt, welche Daten bei der Nutzung von
+        ntgl.at und bei der Anmeldung zu unseren Veranstaltungen verarbeitet werden. Stand: {stand}.
+      </p>
+
+      <h2>1. Verantwortlicher</h2>
+      <p>
+        <mark>[Name des Veranstalters bzw. der Veranstalterin]</mark><br />
+        <mark>[Straße und Hausnummer]</mark><br />
+        <mark>[PLZ und Ort]</mark>, Österreich<br />
+        E-Mail: <a href="mailto:info.ntgl@proton.me">info.ntgl@proton.me</a>
+      </p>
+
+      <h2>2. Anmeldung zur Veranstaltung</h2>
+      <p>
+        Bei der Anmeldung erfassen wir deinen Namen, deine E-Mail-Adresse, den Zeitpunkt der Anmeldung und zur
+        Missbrauchsabwehr die IP-Adresse. Zweck ist die Organisation der jeweiligen Veranstaltung: Gästeliste,
+        Einlass und Kommunikation zu dieser Party (zum Beispiel Zeit- oder Ortsänderungen).
+      </p>
+      <p>
+        Rechtsgrundlage ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO), die du mit dem Häkchen im Formular
+        erteilst, sowie die Durchführung der Veranstaltung, zu der du dich anmeldest (Art. 6 Abs. 1 lit. b DSGVO).
+        Du kannst die Einwilligung jederzeit per E-Mail widerrufen; die Rechtmäßigkeit der bis dahin erfolgten
+        Verarbeitung bleibt davon unberührt.
+      </p>
+      <p>
+        Die Daten werden bis 30 Tage nach der Veranstaltung gespeichert und danach gelöscht, sofern du nicht
+        zusätzlich in Informationen zu künftigen Partys eingewilligt hast.
+      </p>
+
+      <h2>3. Informationen zu künftigen Partys</h2>
+      <p>
+        Nur wenn du das zweite Häkchen setzt, speichern wir deine E-Mail-Adresse, um dich über künftige
+        NTGL-Veranstaltungen zu informieren (Art. 6 Abs. 1 lit. a DSGVO). Jede dieser E-Mails enthält einen Link
+        zum Abbestellen; außerdem genügt eine formlose Nachricht an uns. Nach dem Widerruf löschen wir die Adresse
+        aus dem Verteiler.
+      </p>
+
+      <h2>4. Empfänger und Auftragsverarbeiter</h2>
+      <p>Für den Betrieb der Website und den Versand von E-Mails setzen wir folgende Dienstleister ein:</p>
+      <ul>
+        <li>
+          <strong>Vercel Inc.</strong>, 440 N Barranca Ave #4133, Covina, CA 91723, USA: Hosting der Website und
+          Ausführung des Anmeldeformulars. Server-Logs (IP-Adresse, Zeitpunkt, aufgerufene Seite, Browser) werden
+          kurzfristig zur Sicherstellung des Betriebs verarbeitet. Datenübermittlung in die USA auf Grundlage des
+          EU-US Data Privacy Framework und der EU-Standardvertragsklauseln.
+        </li>
+        <li>
+          <strong>Resend</strong> (Plus Five Five, Inc., USA): Versand der Anmeldebestätigung und der
+          Benachrichtigung an uns. Übermittlung auf Grundlage der EU-Standardvertragsklauseln.
+        </li>
+        <li>
+          <strong>Google Ireland Ltd.</strong>, Gordon House, Barrow Street, Dublin 4, Irland: Speicherung der
+          Gästeliste in Google Tabellen (Google Workspace / Google Drive). Schriftarten werden von Google Fonts
+          geladen; dabei wird deine IP-Adresse an Google übermittelt.
+        </li>
+      </ul>
+      <p>Eine Weitergabe an andere Dritte erfolgt nicht.</p>
+
+      <h2>5. Fotos und Videos bei der Veranstaltung</h2>
+      <p>
+        Bei unseren Partys können Fotos und kurze Videos entstehen, die wir auf ntgl.at und auf Instagram
+        veröffentlichen. Grundlage ist unser berechtigtes Interesse an der Dokumentation und Bewerbung der
+        Veranstaltungsreihe (Art. 6 Abs. 1 lit. f DSGVO, § 12 Abs. 2 Z 4 DSG). Wenn du nicht abgebildet werden
+        möchtest, sag es dem Fotografen oder der Fotografin vor Ort oder schreib uns; wir entfernen Aufnahmen auf
+        Wunsch.
+      </p>
+
+      <h2>6. Cookies und Reichweitenmessung</h2>
+      <p>
+        ntgl.at setzt keine Cookies und verwendet keine Analyse- oder Tracking-Dienste. Beim Klick auf externe Links
+        (Instagram, Google Maps, SoundCloud, YouTube) gelten die Datenschutzbestimmungen der jeweiligen Anbieter.
+      </p>
+
+      <h2>7. Deine Rechte</h2>
+      <p>
+        Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung,
+        Datenübertragbarkeit und Widerspruch sowie auf Widerruf erteilter Einwilligungen. Wende dich dafür an
+        <a href="mailto:info.ntgl@proton.me">info.ntgl@proton.me</a>. Wenn du der Ansicht bist, dass die
+        Verarbeitung gegen das Datenschutzrecht verstößt, kannst du dich bei der
+        <a href="https://www.dsb.gv.at" target="_blank" rel="noopener noreferrer">Österreichischen
+          Datenschutzbehörde</a> beschweren.
+      </p>
+    </article>
+  </main>
+  <Footer />
+</Base>

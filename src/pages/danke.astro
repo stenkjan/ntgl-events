@@ -1,0 +1,20 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Base title="Danke | NTGL" noindex>
+  <Nav compact />
+  <main class="flex-1 bg-fog-haze">
+    <div class="container-narrow py-24 text-center">
+      <p class="text-xs font-medium uppercase tracking-[0.2em] text-fog">Anmeldung</p>
+      <h1 class="text-display mt-3 text-7xl text-white">Du bist dabei</h1>
+      <p class="mx-auto mt-4 max-w-md text-fog-300">
+        Danke für deine Anmeldung. Alle Infos zu Ort, Zeit und Line-up findest du auf der Startseite.
+      </p>
+      <a href="/" class="btn-ghost mt-8">Zurück zur Startseite</a>
+    </div>
+  </main>
+  <Footer />
+</Base>
