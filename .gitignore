@@ -30,3 +30,6 @@ Thumbs.db
 
 # lokale Claude-Code-Konfiguration
 .claude/
+
+.vercel
+.env*
