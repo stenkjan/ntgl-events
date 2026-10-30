@@ -33,3 +33,8 @@ Thumbs.db
 
 .vercel
 .env*
+
+# Schlüsseldateien nie committen
+gcp-service-account.json
+*service-account*.json
+*.pem

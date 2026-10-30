@@ -117,8 +117,9 @@ async function appendToSheet(row: RegistrationRow): Promise<boolean> {
   const token = await googleAccessToken();
   if (!token) return false;
 
-  const tab = env('SHEET_TAB') || 'Anmeldungen';
-  const range = encodeURIComponent(`${tab}!A:F`);
+  // Ohne SHEET_TAB landet die Zeile im ersten Tabellenblatt.
+  const tab = env('SHEET_TAB');
+  const range = encodeURIComponent(tab ? `${tab}!A:F` : 'A:F');
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
   const res = await fetch(url, {
     method: 'POST',

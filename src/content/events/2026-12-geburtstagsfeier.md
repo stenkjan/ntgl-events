@@ -1,9 +1,9 @@
 ---
 title: "NTGL Geburtstagsfeier"
 subtitle: "Dezember Edition"
-# PLATZHALTER: Datum noch nicht fixiert (Aufgabenzuteilung: "Wann ins Geringer? 18.12")
+# Datum bestätigt am 30.10.2026
 date: 2026-12-18
-dateConfirmed: false
+dateConfirmed: true
 doors: "22:00"
 end: "06:00"
 location:
