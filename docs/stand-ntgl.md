@@ -12,7 +12,7 @@ Stand: 30.10.2026, 15:10. Fortgeschrieben von Claude in der Session „NTGL wied
 
 ## Was fehlt (Reihenfolge nach Nutzen)
 
-1. **Resend-Key auf Vercel:** Der Key lag am 30.10. nicht im Projektordner (`.env.production` enthält nur das Vercel-Token). Sobald er als `RESEND_API_KEY=…` in `.env.production` steht, genügt: `grep '^RESEND_API_KEY=' .env.production | cut -d= -f2- | vercel env add RESEND_API_KEY production --scope jans-projects-147b3091 --force` und ein Redeploy. Bis ntgl.at in Resend verifiziert ist, sendet Resend nur über `onboarding@resend.dev` und nur an die eigene Kontoadresse; `MAIL_FROM` dann vorübergehend darauf setzen.
+1. **Absender umstellen, sobald ntgl.at läuft:** `RESEND_API_KEY` ist seit 30.10. 15:30 auf Vercel gesetzt. Im Resend-Konto ist nur `hoam.space` verifiziert, darum sendet die Seite vorerst als `NTGL <ntgl@hoam.space>` (Antworten gehen per Reply-To an info.ntgl@proton.me). Nach DNS: ntgl.at in Resend anlegen, DKIM/SPF setzen, dann `MAIL_FROM` auf `NTGL <anmeldung@ntgl.at>` ändern und neu deployen.
 2. **Hetzner DNS** (Jan im Browser): entweder Nameserver auf `ns1.vercel-dns.com` / `ns2.vercel-dns.com` oder in der Hetzner-Zone `A @ 216.198.79.1`, `A @ 64.29.17.1`, `CNAME www cname.vercel-dns.com`. Danach `vercel domains verify ntgl.at --scope jans-projects-147b3091`. Dazu die DKIM/SPF-Einträge aus Resend für die Domain ntgl.at.
 3. **Inhalt der Dezember-Party:** neuer Flyer, bestätigtes Line-up (Entwurf aus „NTGL Musik“ als Kommentar in der Event-Datei), Titel/Untertitel.
 4. **Impressum und Datenschutz:** Name und Anschrift des Veranstalters eintragen (gelb markierte Platzhalter in `src/pages/impressum.astro` und `src/pages/datenschutz.astro`).
