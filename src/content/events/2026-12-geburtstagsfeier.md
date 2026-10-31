@@ -11,22 +11,23 @@ location:
   address: "Josefigasse 47, 8020 Graz"
   mapsUrl: "https://maps.google.com/?q=Josefigasse+47,+8020+Graz"
 price: "10 € Musikspende"
-# PLATZHALTER: alter Flyer vom 21.03.2025, bis der neue fertig ist
-flyer: "/flyers/2025-03-21.jpeg"
-flyerAlt: "NTGL Flyer"
-# Line-up laut Doc "NTGL Musik" (Stand 29.10.2026, noch nicht bestätigt):
-#   22:30 bis 24:00  Tobi   60 % Happy Bounce, 40 % Atzenbounce/Trance, 140 bis 150 bpm
-#   24:00 bis 02:00  Alex?  (gestrichen)
-#   02:00 bis 04:00  Livko? (gestrichen)
-#   04:00 bis 06:00  Laura  Acid/Melodic Trance, 155 bis 160 bpm
-# Sobald bestätigt hier eintragen, z. B.
-#   - time: "22:30"
-#     artist: "TOBI"
-#     genre: "Happy Bounce / Trance"
-#     links:
-#       - label: "SoundCloud"
-#         url: "https://soundcloud.com/..."
-lineup: []
+flyer: "/flyers/2026-12-18.jpg"
+flyerAlt: "NTGL Flyer 18.12.2026: Hard Trance, Hard Dance. Line-up Tobi, Alex, Livko, Laura. Josefigasse 47, Graz."
+# Line-up laut Event-Timetable im Doc "NTGL Musik" (Stand 29.10.2026).
+# Alex und Livko stehen dort noch mit Fragezeichen, also unbestätigt.
+lineup:
+  - time: "22:30"
+    artist: "TOBI"
+    genre: "Happy Bounce / Trance · 140–150 BPM"
+  - time: "00:00"
+    artist: "ALEX"
+    genre: "Bouncy Techno / Hard Dance · 145–155 BPM"
+  - time: "02:00"
+    artist: "LIVKO"
+    genre: "Vocal · 150–160 BPM"
+  - time: "04:00"
+    artist: "LAURA"
+    genre: "Acid / Melodic Trance · 155–160 BPM"
 notes:
   - "Private Veranstaltung. Anmeldung mit Name und E-Mail ist verpflichtend."
   - "10 € Musikspende zur Kostendeckung, nur Bargeld."
