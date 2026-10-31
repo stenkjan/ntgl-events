@@ -1,8 +1,8 @@
 ---
-import type { EventEntry } from '../lib/events';
+import type { EventData } from '../lib/events';
 
 interface Props {
-  items: EventEntry['data']['lineup'];
+  items: EventData['lineup'];
 }
 const { items } = Astro.props;
 ---

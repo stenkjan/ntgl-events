@@ -1,0 +1,114 @@
+---
+import Intern from '../../../layouts/Intern.astro';
+import Karte from '../../../components/intern/Karte.astro';
+import Marke from '../../../components/intern/Marke.astro';
+import ModulTabelle from '../../../components/intern/ModulTabelle.astro';
+import { betrifft, ladeLage } from '../../../lib/intern/daten';
+import { heuteIso } from '../../../lib/intern/format';
+import { HAUPTROLLEN, ROLLEN, rolleAusText } from '../../../lib/intern/rollen';
+import { BEREICHE, TABELLEN } from '../../../lib/intern/schema';
+import type { Zeile } from '../../../lib/intern/sheets';
+
+export const prerender = false;
+
+const m = Astro.locals.mitglied!;
+const lage = await ladeLage();
+const filter = Astro.url.searchParams.get('filter') ?? 'offen';
+const suche = (Astro.url.searchParams.get('q') ?? '').trim().toLowerCase();
+const heute = heuteIso();
+const inSiebenTagen = heuteIso(new Date(Date.now() + 7 * 86_400_000));
+const aktive = lage.t.mitglieder.filter((x) => String(x.status || 'aktiv') === 'aktiv');
+const inhaber = (r: string) => aktive.filter((x) => rolleAusText(String(x.rolle)) === r);
+const pruefer = aktive.filter((x) => /rechnungspr/i.test(String(x.funktion)));
+
+const FILTER: Record<string, { titel: string; test: (a: Zeile) => boolean }> = {
+  meine: { titel: 'Meine', test: (a) => a.status !== 'erledigt' && betrifft(a.verantwortlich, m.name) },
+  offen: { titel: 'Alle offenen', test: (a) => a.status !== 'erledigt' },
+  ueberfaellig: { titel: 'Überfällig', test: (a) => a.status !== 'erledigt' && Boolean(a.faellig) && String(a.faellig) < heute },
+  bald: {
+    titel: 'Nächste 7 Tage',
+    test: (a) => a.status !== 'erledigt' && String(a.faellig ?? '') >= heute && String(a.faellig ?? '') <= inSiebenTagen,
+  },
+  ohne: { titel: 'Ohne Zuständige', test: (a) => a.status !== 'erledigt' && !String(a.verantwortlich ?? '').trim() },
+  erledigt: { titel: 'Erledigt', test: (a) => a.status === 'erledigt' },
+  alle: { titel: 'Alle', test: () => true },
+};
+const aktiv = FILTER[filter] ?? FILTER.offen!;
+const rang: Record<string, number> = { hoch: 0, normal: 1, niedrig: 2 };
+const zeilen = lage.t.aufgaben
+  .filter(aktiv.test)
+  .filter((a) => !suche || String(a.aufgabe ?? '').toLowerCase().includes(suche))
+  .sort(
+    (a, b) =>
+      (String(a.faellig || '9999') < String(b.faellig || '9999') ? -1 : String(a.faellig || '9999') > String(b.faellig || '9999') ? 1 : 0) ||
+      (rang[String(a.prioritaet)] ?? 1) - (rang[String(b.prioritaet)] ?? 1),
+  );
+---
+
+<Intern titel="Rollen & Aufgaben" untertitel="Wer welche Rolle hat, wer welchen Bereich betreut und was offen ist.">
+  <div class="grid gap-4 lg:grid-cols-3">
+    {
+      HAUPTROLLEN.map((r) => {
+        const wer = inhaber(r);
+        return (
+          <Karte titel={ROLLEN[r].titel} link="/intern/daten/mitglieder" linkText="Besetzen">
+            <p class="text-display text-3xl text-white">{wer.length ? wer.map((x) => String(x.name)).join(', ') : 'unbesetzt'}</p>
+            {!wer.length && <Marke text="offen" ton="ernst" />}
+            <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-fog-300">
+              {ROLLEN[r].aufgaben.map((a) => (
+                <li>{a}</li>
+              ))}
+            </ul>
+          </Karte>
+        );
+      })
+    }
+  </div>
+
+  <div class="mt-4 grid gap-4 lg:grid-cols-3">
+    <Karte titel="Rechnungsprüfung">
+      <p class="text-display text-3xl text-white">
+        {pruefer.length} <span class="text-xl text-fog">/ 2</span>
+      </p>
+      <p class="mt-1 text-sm text-fog-300">
+        {pruefer.length ? pruefer.map((x) => String(x.name)).join(', ') : 'Noch niemand eingetragen.'} Prüfer:innen dürfen nicht im Vorstand sitzen
+        (Funktion „Rechnungsprüfung“ bei einem Mitglied ohne Vorstandsrolle eintragen).
+      </p>
+    </Karte>
+    <Karte titel="Bereiche und wer sie betreut" class="lg:col-span-2">
+      <ul class="grid gap-2 text-sm sm:grid-cols-2">
+        {
+          BEREICHE.map((b) => {
+            const wer = aktive.filter((x) => Array.isArray(x.bereiche) && x.bereiche.includes(b)).map((x) => String(x.name));
+            return (
+              <li class="flex items-center justify-between gap-3 rounded-lg border border-fog-800/80 px-3 py-2">
+                <span class="text-fog-100">{b}</span>
+                {wer.length ? <span class="text-right text-white">{wer.join(', ')}</span> : <Marke text="niemand" ton="ernst" />}
+              </li>
+            );
+          })
+        }
+      </ul>
+    </Karte>
+  </div>
+
+  <div class="mb-4 mt-8 flex flex-wrap items-center gap-2 text-sm">
+    <h2 class="text-display mr-3 text-3xl text-white">Aufgaben</h2>
+    {
+      Object.entries(FILTER).map(([k, f]) => (
+        <a
+          href={`?filter=${k}`}
+          class:list={['rounded-full border px-3 py-1', k === filter ? 'border-fog bg-ink-700 text-white' : 'border-fog-700 text-fog-300 hover:text-white']}
+        >
+          {f.titel} ({lage.t.aufgaben.filter(f.test).length})
+        </a>
+      ))
+    }
+    <form method="get" class="ml-auto flex items-center gap-2">
+      <input type="hidden" name="filter" value={filter} />
+      <label for="q" class="sr-only">Aufgaben durchsuchen</label>
+      <input id="q" name="q" value={suche} placeholder="Suchen, z. B. Behörde:" class="field !w-56 !py-1.5 text-sm" />
+    </form>
+  </div>
+  <ModulTabelle def={TABELLEN.aufgaben} zeilen={zeilen} lage={lage} leer="Keine Aufgaben in dieser Ansicht." titelNeu="Aufgabe" />
+</Intern>

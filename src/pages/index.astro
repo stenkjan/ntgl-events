@@ -5,12 +5,18 @@ import Nav from '../components/Nav.astro';
 import Hero from '../components/Hero.astro';
 import Lineup from '../components/Lineup.astro';
 import Info from '../components/Info.astro';
+import Galerie from '../components/Galerie.astro';
 import RegisterForm from '../components/RegisterForm.astro';
 import Footer from '../components/Footer.astro';
 import { pickCurrentEvent, formatDateShort } from '../lib/events';
+import { juengsteFreigabeLaden } from '../lib/website';
 
-const { event, isPast } = await pickCurrentEvent();
-const Content = event ? (await render(event)).Content : null;
+// Beim Build: jüngste Freigabe aus dem Mitgliederbereich (ohne Konfiguration nur Markdown).
+const freigabe = await juengsteFreigabeLaden(0);
+const { event, isPast } = await pickCurrentEvent(new Date(), freigabe);
+const Content = event?.entry && !event.beschreibung ? (await render(event.entry)).Content : null;
+const absaetze = event?.beschreibung?.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean) ?? [];
+const bilder = (freigabe?.bilder ?? []).slice(0, 12);
 
 const eventLabel = event
   ? `${event.data.title}${event.data.dateConfirmed ? ` (${formatDateShort(event.data.date)})` : ''}`
@@ -29,7 +35,13 @@ const description = event
         <>
           <Hero event={event} isPast={isPast} />
           <Lineup items={event.data.lineup} />
-          <Info notes={event.data.notes}>{Content && <Content />}</Info>
+          <Info notes={event.data.notes}>
+            {Content && <Content />}
+            {absaetze.map((p) => (
+              <p>{p}</p>
+            ))}
+          </Info>
+          {bilder.length > 0 && <Galerie bilder={bilder} />}
           <RegisterForm eventLabel={eventLabel} status={isPast ? 'closed' : event.data.registration} />
         </>
       ) : (

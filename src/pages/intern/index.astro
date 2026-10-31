@@ -1,0 +1,286 @@
+---
+import Intern from '../../layouts/Intern.astro';
+import Karte from '../../components/intern/Karte.astro';
+import Vorschlaege from '../../components/intern/Vorschlaege.astro';
+import Countdown from '../../components/intern/Countdown.astro';
+import Verlauf from '../../components/intern/Verlauf.astro';
+import Balken from '../../components/intern/Balken.astro';
+import Saeulen from '../../components/intern/Saeulen.astro';
+import Marke from '../../components/intern/Marke.astro';
+import { anmeldungenFuer, budgetFuer, historie, ladeLage } from '../../lib/intern/daten';
+import { countdown, kennzahlen, meineAufgaben, vorschlaege } from '../../lib/intern/auswertung';
+import { datumKurz, datumLang, euro, heuteIso, inTagen, plural, prozent } from '../../lib/intern/format';
+import { rollenTitel } from '../../lib/intern/rollen';
+
+export const prerender = false;
+
+const m = Astro.locals.mitglied!;
+const lage = await ladeLage();
+const k = kennzahlen(lage);
+const vs = vorschlaege(lage, k);
+const nx = k.naechste;
+const datum = nx ? String(nx.v.datum) : '';
+
+// Anmeldungen kumuliert je Tag bis heute (bzw. bis zur Party)
+const verlauf = (() => {
+  if (!nx) return [];
+  const anm = anmeldungenFuer(lage, datum).filter((a) => a.zeit);
+  if (anm.length === 0) return [];
+  const tage = anm.map((a) => heuteIso(new Date(a.zeit))).sort();
+  const ende = [heuteIso(), datum].sort()[0]!;
+  const punkte: Array<{ tag: string; label: string; wert: number }> = [];
+  let summe = 0;
+  for (let d = new Date(`${tage[0]}T12:00:00Z`); heuteIso(d) <= ende; d = new Date(d.getTime() + 86_400_000)) {
+    const iso = heuteIso(d);
+    summe += tage.filter((t) => t === iso).length;
+    punkte.push({ tag: iso, label: datumKurz(iso).slice(0, 6), wert: summe });
+  }
+  return punkte;
+})();
+
+const budget = nx ? budgetFuer(lage, datum).filter((b) => b.art === 'Ausgabe' && (b.plan !== null || b.ist > 0)) : [];
+const hist = historie(lage);
+const meine = meineAufgaben(lage, m.name).slice(0, 6);
+const budgetAuslastung = nx && nx.planAusgaben > 0 ? nx.istAusgaben / nx.planAusgaben : null;
+const zuWenigHistorie = hist.length < 5;
+const vereinsstatus = lage.einstellungen.vereinsstatus || 'Gründung in Vorbereitung';
+---
+
+<Intern titel="Übersicht" untertitel={`Hallo ${m.name.split(' ')[0]} · ${rollenTitel(m)} · Verein: ${vereinsstatus}`}>
+  {
+    (!lage.bereit || lage.fehler) && (
+      <div class="mb-6 rounded-2xl border border-[#fab219]/50 bg-[#fab219]/10 p-5 text-sm text-fog-100">
+        <p class="font-medium text-white">Datenquelle noch nicht vollständig</p>
+        <p class="mt-1 text-fog-300">{lage.fehler}</p>
+        <a href="/intern/verwaltung/einstellungen" class="mt-3 inline-block underline underline-offset-4">
+          Zu den Einstellungen
+        </a>
+      </div>
+    )
+  }
+
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <Karte titel="Nächste Party" link="/intern/verwaltung/planung">
+      {
+        nx ? (
+          <>
+            <p class="text-display text-4xl text-white">{datumKurz(datum)}</p>
+            <p class="mt-1 text-sm text-fog-300">
+              {String(nx.v.titel)} · {inTagen(nx.tage)}
+            </p>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <Marke text={String(nx.v.status)} />
+              {nx.aufWebsite ? <Marke text="auf Website" ton="gut" /> : <Marke text="nicht auf Website" ton="ernst" />}
+            </div>
+          </>
+        ) : (
+          <p class="text-sm text-fog-300">Keine Party geplant.</p>
+        )
+      }
+    </Karte>
+
+    <Karte titel="Auslastung" link="/intern/daten/anmeldungen">
+      {
+        nx ? (
+          <>
+            <p class="text-display text-4xl text-white">
+              {nx.anmeldungen}
+              {nx.kapazitaet && <span class="text-2xl text-fog"> / {nx.kapazitaet}</span>}
+            </p>
+            <p class="mt-1 text-sm text-fog-300">
+              Anmeldungen{nx.auslastung !== null && ` · ${prozent(nx.auslastung)} der Plätze`} · {nx.newsletter} mit Newsletter
+            </p>
+            {nx.auslastung !== null && (
+              <div class="mt-3 h-2 rounded-full bg-fog-800" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(nx.auslastung * 100)} aria-label="Auslastung">
+                <div class="h-2 rounded-full" style={`width:${Math.min(100, nx.auslastung * 100)}%;background:${nx.auslastung >= 0.9 ? '#ec835a' : '#3987e5'}`} />
+              </div>
+            )}
+          </>
+        ) : (
+          <p class="text-sm text-fog-300">–</p>
+        )
+      }
+    </Karte>
+
+    <Karte titel="Budget nächste Party" link={nx ? `/intern/finanzen/budget?v=${datum}` : '/intern/finanzen/budget'}>
+      {
+        nx && nx.planAusgaben > 0 ? (
+          <>
+            <p class="text-display text-4xl text-white">{prozent(budgetAuslastung)}</p>
+            <p class="mt-1 text-sm text-fog-300">
+              {euro(nx.istAusgaben, true)} von {euro(nx.planAusgaben, true)} ausgegeben
+              {nx.breakEvenGaeste !== null && ` · Kostendeckung ab ${nx.breakEvenGaeste} Gästen`}
+            </p>
+          </>
+        ) : (
+          <>
+            <p class="text-display text-4xl text-fog">kein Plan</p>
+            <p class="mt-1 text-sm text-fog-300">Vorschläge aus früheren Partys im Budget-Modul.</p>
+          </>
+        )
+      }
+    </Karte>
+
+    <Karte titel="Kassa & Konto" link="/intern/finanzen/kassabuch">
+      <p class="text-display text-4xl text-white">{euro(k.konto.gesamt, true)}</p>
+      <p class="mt-1 text-sm text-fog-300">
+        Bar {euro(k.konto.kassa, true)} · Bank {euro(k.konto.bank, true)}
+      </p>
+    </Karte>
+  </div>
+
+  <div class="mt-4 grid gap-4 xl:grid-cols-3">
+    <Karte titel={`Vorschläge (${vs.length})`} class="xl:col-span-2">
+      <Vorschlaege liste={vs} />
+    </Karte>
+    <Karte titel={nx ? `Countdown ${datumKurz(datum)}` : 'Countdown'} link="/intern/verwaltung/planung">
+      {nx ? <Countdown punkte={countdown(lage, nx.v)} tage={nx.tage} /> : <p class="text-sm text-fog-300">Keine Party geplant.</p>}
+    </Karte>
+  </div>
+
+  <div class="mt-4 grid gap-4 xl:grid-cols-2">
+    <Karte titel="Anmeldungen bis heute" link="/intern/daten/anmeldungen">
+      <Verlauf
+        punkte={verlauf}
+        titel="Anmeldungen kumuliert"
+        referenz={nx?.kapazitaet ? { wert: nx.kapazitaet, label: `Kapazität ${nx.kapazitaet}` } : null}
+      />
+    </Karte>
+    <Karte titel="Budget: Plan und Ist je Kategorie" link={nx ? `/intern/finanzen/budget?v=${datum}` : undefined}>
+      {
+        budget.length ? (
+          <Balken
+            titel="Kategorie"
+            wertTitel="Ist"
+            planTitel="Plan"
+            daten={budget.map((b) => ({
+              label: b.kategorie,
+              wert: b.ist,
+              plan: b.plan,
+              text: `${euro(b.ist, true)} / ${euro(b.plan, true)}`,
+              warnung: b.plan !== null && b.ist > b.plan,
+              tip: `${b.kategorie}: Ist ${euro(b.ist)} · Plan ${euro(b.plan)}`,
+            }))}
+          />
+        ) : (
+          <p class="text-sm text-fog-300">Noch kein Budget für die nächste Party.</p>
+        )
+      }
+    </Karte>
+  </div>
+
+  <div class="mt-4 grid gap-4 lg:grid-cols-3">
+    <Karte titel="Equipment" link="/intern/verwaltung/equipment">
+      <dl class="grid grid-cols-3 gap-3 text-center">
+        <div>
+          <dt class="text-xs text-fog">gesamt</dt>
+          <dd class="text-display text-3xl text-white">{k.equipment.gesamt}</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-fog">fehlt/defekt</dt>
+          <dd class="text-display text-3xl text-white">{k.equipment.fehlt}</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-fog">Packliste</dt>
+          <dd class="text-display text-3xl text-white">{k.equipment.fuerNaechste}</dd>
+        </div>
+      </dl>
+      {
+        k.equipment.fehltFuerNaechste.length > 0 && (
+          <ul class="mt-4 space-y-1.5 text-sm">
+            {k.equipment.fehltFuerNaechste.slice(0, 6).map((e) => (
+              <li class="flex items-center justify-between gap-2">
+                <span class="truncate text-fog-100">{String(e.gegenstand)}</span>
+                <Marke text={String(e.zustand)} />
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </Karte>
+
+    <Karte titel="Team-Auslastung (offene Aufgaben)" link="/intern/verwaltung/aufgaben">
+      {
+        k.team.length ? (
+          <Balken titel="Person" wertTitel="Offene Aufgaben" daten={k.team.map((t) => ({ label: t.name, wert: t.offen, tip: `${t.name}: ${plural(t.offen, 'offene Aufgabe', 'offene Aufgaben')}` }))} />
+        ) : (
+          <p class="text-sm text-fog-300">Noch keine Mitglieder eingetragen.</p>
+        )
+      }
+      <p class="mt-3 text-xs text-fog">
+        {k.aufgaben.offen} offen · {k.aufgaben.ueberfaellig} überfällig · {k.aufgaben.ohneVerantwortung} ohne Zuständige
+      </p>
+    </Karte>
+
+    <Karte titel="Meine Aufgaben" link="/intern/verwaltung/aufgaben?filter=meine">
+      {
+        meine.length ? (
+          <ul class="space-y-2 text-sm">
+            {meine.map((a) => (
+              <li class="flex items-start justify-between gap-2">
+                <a href={`/intern/verwaltung/aufgaben?bearbeiten=${a.id}`} class="min-w-0 text-fog-100 hover:text-white hover:underline">
+                  {String(a.aufgabe)}
+                  {a.faellig && <span class="block text-xs text-fog">fällig {datumKurz(String(a.faellig))}</span>}
+                </a>
+                <Marke text={String(a.status)} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="text-sm text-fog-300">Dir ist gerade nichts zugewiesen.</p>
+        )
+      }
+    </Karte>
+  </div>
+
+  <div class="mt-4 grid gap-4 xl:grid-cols-3">
+    <Karte titel="Historie: Einnahmen und Ausgaben" link="/intern/daten/historie" class="xl:col-span-2">
+      {
+        hist.length ? (
+          <>
+            <Saeulen
+              titel="Einnahmen und Ausgaben je Party"
+              format={(n) => euro(n, true)}
+              gruppen={hist.slice(-6).map((h) => ({
+                label: datumKurz(h.datum).slice(0, 6) + datumKurz(h.datum).slice(8),
+                einnahmen: h.einnahmen,
+                ausgaben: h.ausgaben,
+                fussnote: h.ergebnis !== null ? `Ergebnis ${euro(h.ergebnis, true)}` : h.gaeste ? `${h.gaeste} Gäste` : undefined,
+              }))}
+            />
+            <p class="mt-3 text-xs text-fog">
+              {plural(hist.length, 'Party', 'Partys')} erfasst.
+              {zuWenigHistorie && ' Unter fünf Partys gibt es kein Trendurteil, nur Einzelwerte.'}
+            </p>
+          </>
+        ) : (
+          <p class="text-sm text-fog-300">Noch keine abgeschlossenen Partys erfasst.</p>
+        )
+      }
+    </Karte>
+    <Karte titel="Verein" link="/intern/verwaltung/verein">
+      {
+        k.verein.gesamt ? (
+          <>
+            <p class="text-display text-4xl text-white">
+              {k.verein.erledigt}
+              <span class="text-2xl text-fog"> / {k.verein.gesamt}</span>
+            </p>
+            <p class="mt-1 text-sm text-fog-300">Schritte erledigt</p>
+            <div class="mt-3 h-2 rounded-full bg-fog-800">
+              <div class="h-2 rounded-full" style={`width:${(k.verein.erledigt / k.verein.gesamt) * 100}%;background:#3987e5`} />
+            </div>
+            {k.verein.naechster && (
+              <p class="mt-4 text-sm text-fog-100">
+                Als Nächstes: <span class="text-white">{String(k.verein.naechster.schritt)}</span>
+              </p>
+            )}
+          </>
+        ) : (
+          <p class="text-sm text-fog-300">Gründungsschritte werden bei der Einrichtung angelegt.</p>
+        )
+      }
+      {nx && <p class="mt-4 text-xs text-fog">Party am {datumLang(datum)}</p>}
+    </Karte>
+  </div>
+</Intern>

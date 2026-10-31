@@ -1,13 +1,9 @@
 import { Resend } from 'resend';
-import { createSign } from 'node:crypto';
+import { env } from './env';
+import { googleAccessToken } from './google';
 
 type Input = Record<string, string | undefined>;
 export type Result = { ok: true; stored: Array<'sheet' | 'mail'> } | { ok: false; error: string };
-
-const env = (key: string): string => {
-  const fromMeta = (import.meta.env as Record<string, string | undefined>)[key];
-  return (fromMeta ?? process.env[key] ?? '').trim();
-};
 
 const truthy = (v: string | undefined) => v === 'on' || v === 'true' || v === '1' || v === 'ja';
 
@@ -79,37 +75,7 @@ export async function handleRegistration(input: Input, meta: { ip: string; ua: s
   return { ok: true, stored };
 }
 
-/* ---------- Google Sheets über Service-Account (ohne zusätzliche Abhängigkeit) ---------- */
-
-async function googleAccessToken(): Promise<string | null> {
-  const email = env('GOOGLE_SERVICE_ACCOUNT_EMAIL');
-  let key = env('GOOGLE_PRIVATE_KEY');
-  if (!email || !key) return null;
-  key = key.replace(/\\n/g, '\n');
-
-  const now = Math.floor(Date.now() / 1000);
-  const b64 = (o: unknown) => Buffer.from(JSON.stringify(o)).toString('base64url');
-  const unsigned = `${b64({ alg: 'RS256', typ: 'JWT' })}.${b64({
-    iss: email,
-    scope: 'https://www.googleapis.com/auth/spreadsheets',
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600,
-  })}`;
-  const signature = createSign('RSA-SHA256').update(unsigned).sign(key, 'base64url');
-
-  const res = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: `${unsigned}.${signature}`,
-    }),
-  });
-  if (!res.ok) throw new Error(`google token ${res.status}`);
-  const json = (await res.json()) as { access_token?: string };
-  return json.access_token ?? null;
-}
+/* ---------- Google Sheets über Service-Account (siehe lib/google.ts) ---------- */
 
 async function appendToSheet(row: RegistrationRow): Promise<boolean> {
   const sheetId = env('SHEET_ID');

@@ -1,0 +1,107 @@
+---
+import Base from '../../layouts/Base.astro';
+import { authBereit, sichererPfad } from '../../lib/intern/auth';
+
+export const prerender = false;
+
+const q = Astro.url.searchParams;
+const weiter = sichererPfad(q.get('weiter'));
+const gesendet = q.has('gesendet');
+const abgemeldet = q.has('abgemeldet');
+const fehler = q.get('fehler');
+const devLink = import.meta.env.DEV ? q.get('dev') : null;
+const bereit = authBereit();
+---
+
+<Base title="Anmelden | NTGL intern" noindex>
+  <main class="flex flex-1 items-center justify-center bg-fog-haze px-4 py-16">
+    <div class="w-full max-w-md rounded-2xl border border-fog-800/80 bg-ink-800/80 p-6 shadow-2xl shadow-black/50 sm:p-8">
+      <a href="/" class="mb-6 flex items-center gap-3" aria-label="Zur öffentlichen Seite">
+        <img src="/ntgl_logo.png" alt="" width="36" height="36" class="h-9 w-9 invert mix-blend-screen" />
+        <span class="text-display text-3xl text-white">NTGL <span class="text-fog">intern</span></span>
+      </a>
+
+      {
+        gesendet ? (
+          <div class="space-y-4" role="status">
+            <h1 class="text-display text-4xl text-white">Schau in dein Postfach</h1>
+            <p class="text-fog-300">
+              Wenn die Adresse bei uns als Mitglied eingetragen ist, kommt gleich eine Mail mit deinem Login-Link. Er gilt 20
+              Minuten.
+            </p>
+            {devLink && (
+              <p class="rounded-xl border border-[#fab219]/50 bg-[#fab219]/10 p-3 text-sm text-fog-100">
+                Entwicklungsmodus, keine Mail versendet:
+                <a href={devLink} class="mt-1 block break-all text-white underline underline-offset-4">
+                  Link direkt öffnen
+                </a>
+              </p>
+            )}
+            <a href={`/intern/anmelden?weiter=${encodeURIComponent(weiter)}`} class="btn-ghost w-full">
+              Andere Adresse
+            </a>
+          </div>
+        ) : (
+          <>
+            <h1 class="text-display text-4xl text-white">Mitgliederbereich</h1>
+            <p class="mt-2 text-fog-300">Für eingetragene Mitglieder. Du bekommst einen Link per Mail, ein Passwort brauchst du nicht.</p>
+
+            {abgemeldet && (
+              <p class="mt-5 rounded-xl bg-fog-800/80 px-4 py-3 text-sm text-fog-100" role="status">
+                Du bist abgemeldet.
+              </p>
+            )}
+            {fehler && (
+              <p class="mt-5 rounded-xl bg-signal/20 px-4 py-3 text-sm text-white" role="alert">
+                {fehler}
+              </p>
+            )}
+            {!bereit && (
+              <p class="mt-5 rounded-xl border border-[#fab219]/50 bg-[#fab219]/10 px-4 py-3 text-sm text-fog-100">
+                Der Login ist noch nicht eingerichtet (AUTH_SECRET fehlt).
+              </p>
+            )}
+
+            <form method="post" action="/intern/api/anmelden" class="mt-6 space-y-4" novalidate>
+              <input type="hidden" name="weiter" value={weiter} />
+              <input type="hidden" name="ts" value="" data-ts />
+              <div class="hidden" aria-hidden="true">
+                <label>
+                  Website
+                  <input type="text" name="website" tabindex="-1" autocomplete="off" />
+                </label>
+              </div>
+              <div>
+                <label for="email" class="mb-2 block text-sm font-medium text-fog-100">
+                  E-Mail
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  autocomplete="email"
+                  placeholder="du@example.at"
+                  class="field"
+                  autofocus
+                />
+              </div>
+              <button type="submit" class="btn-primary w-full" disabled={!bereit}>
+                Login-Link senden
+              </button>
+            </form>
+          </>
+        )
+      }
+
+      <p class="mt-8 text-center text-xs text-fog">
+        <a href="/" class="underline decoration-fog-700 underline-offset-4 hover:text-white">Zur Party-Seite</a>
+      </p>
+    </div>
+  </main>
+</Base>
+
+<script>
+  const ts = document.querySelector<HTMLInputElement>('[data-ts]');
+  if (ts) ts.value = String(Date.now());
+</script>

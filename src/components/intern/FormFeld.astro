@@ -1,0 +1,109 @@
+---
+import type { Feld } from '../../lib/intern/schema';
+import type { Wert } from '../../lib/intern/sheets';
+
+interface Props {
+  feld: Feld;
+  wert: Wert | undefined;
+  aktiv: boolean;
+  veranstaltungen: Array<{ wert: string; label: string }>;
+}
+const { feld: f, wert, aktiv, veranstaltungen } = Astro.props;
+const id = `f-${f.key}`;
+const text = wert === null || wert === undefined ? '' : Array.isArray(wert) ? wert.join(', ') : String(wert);
+const liste = Array.isArray(wert) ? wert : text ? text.split(/,\s*/) : [];
+const geld = typeof wert === 'number' && f.typ === 'geld' ? String(wert).replace('.', ',') : text;
+const pflicht = Boolean(f.pflicht) && aktiv;
+const klasse = 'field disabled:cursor-not-allowed disabled:opacity-60';
+// Uhrzeit als Text: Partys enden um 24:00 oder 06:00, das kann ein type="time"-Feld nicht darstellen.
+const muster = f.typ === 'geld' ? '[0-9]+([.,][0-9]{1,2})?' : f.typ === 'zeit' ? '([01][0-9]|2[0-4]):[0-5][0-9]' : undefined;
+---
+
+<div class:list={[f.breit || f.typ === 'lang' || f.typ === 'mehrfach' ? 'sm:col-span-2' : '']}>
+  {
+    f.typ === 'janein' ? (
+      <label class="flex items-center gap-3 pt-7 text-sm text-fog-100">
+        <input
+          type="checkbox"
+          name={f.key}
+          value="ja"
+          checked={wert === true}
+          disabled={!aktiv}
+          class="h-4 w-4 rounded border-fog-700 bg-ink accent-signal"
+        />
+        {f.titel}
+      </label>
+    ) : (
+      <>
+        <label for={id} class="mb-1.5 block text-sm font-medium text-fog-100">
+          {f.titel}
+          {pflicht && <span class="text-signal-300"> *</span>}
+        </label>
+        {f.typ === 'lang' ? (
+          <textarea id={id} name={f.key} rows="4" class={klasse} required={pflicht} disabled={!aktiv} maxlength="5000">{text}</textarea>
+        ) : f.typ === 'auswahl' ? (
+          <select id={id} name={f.key} class={klasse} required={pflicht} disabled={!aktiv}>
+            {!f.pflicht && <option value="">–</option>}
+            {f.optionen?.map((o) => (
+              <option value={o} selected={o === text}>
+                {o}
+              </option>
+            ))}
+          </select>
+        ) : f.typ === 'veranstaltung' ? (
+          <select id={id} name={f.key} class={klasse} required={pflicht} disabled={!aktiv}>
+            {!f.pflicht && <option value="">–</option>}
+            {veranstaltungen.map((o) => (
+              <option value={o.wert} selected={o.wert === text}>
+                {o.label}
+              </option>
+            ))}
+            {text && !veranstaltungen.some((o) => o.wert === text) && (
+              <option value={text} selected>
+                {text}
+              </option>
+            )}
+          </select>
+        ) : f.typ === 'mehrfach' ? (
+          <fieldset class="flex flex-wrap gap-2" disabled={!aktiv}>
+            <legend class="sr-only">{f.titel}</legend>
+            {f.optionen?.map((o) => (
+              <label class="inline-flex items-center gap-2 rounded-full border border-fog-700 px-3 py-1.5 text-sm text-fog-100 has-[:checked]:border-fog has-[:checked]:bg-ink-700">
+                <input type="checkbox" name={f.key} value={o} checked={liste.includes(o)} class="h-3.5 w-3.5 accent-signal" />
+                {o}
+              </label>
+            ))}
+          </fieldset>
+        ) : (
+          <input
+            id={id}
+            name={f.key}
+            class={klasse}
+            required={pflicht}
+            disabled={!aktiv}
+            value={f.typ === 'geld' ? geld : text}
+            list={f.typ === 'person' ? 'ntgl-namen' : undefined}
+            type={
+              f.typ === 'datum'
+                ? 'date'
+                : f.typ === 'zahl'
+                    ? 'number'
+                    : f.typ === 'email'
+                      ? 'email'
+                      : f.typ === 'link'
+                        ? 'url'
+                        : 'text'
+            }
+            step={f.typ === 'zahl' ? 'any' : undefined}
+            inputmode={f.typ === 'geld' ? 'decimal' : f.typ === 'zeit' ? 'numeric' : undefined}
+            pattern={muster}
+            placeholder={f.typ === 'geld' ? '0,00' : f.typ === 'link' ? 'https://' : f.typ === 'zeit' ? '22:30' : undefined}
+            maxlength={f.typ === 'text' || f.typ === 'person' ? 300 : undefined}
+            autocomplete="off"
+          />
+        )}
+      </>
+    )
+  }
+  {f.hilfe && <p class="mt-1 text-xs text-fog">{f.hilfe}</p>}
+</div>

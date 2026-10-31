@@ -1,0 +1,23 @@
+---
+interface Props {
+  titel: string;
+  link?: string;
+  linkText?: string;
+  class?: string;
+}
+const { titel, link, linkText = 'Öffnen', class: klasse } = Astro.props;
+---
+
+<section class:list={['rounded-2xl border border-fog-800/80 bg-ink-800/60 p-5', klasse]}>
+  <div class="mb-4 flex items-center justify-between gap-3">
+    <h2 class="text-xs font-medium uppercase tracking-[0.18em] text-fog">{titel}</h2>
+    {
+      link && (
+        <a href={link} class="text-xs text-fog-300 underline decoration-fog-700 underline-offset-4 hover:text-white">
+          {linkText}
+        </a>
+      )
+    }
+  </div>
+  <slot />
+</section>

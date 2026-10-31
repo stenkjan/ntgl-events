@@ -1,0 +1,220 @@
+---
+import Intern from '../../../layouts/Intern.astro';
+import ModulTabelle from '../../../components/intern/ModulTabelle.astro';
+import Karte from '../../../components/intern/Karte.astro';
+import Countdown from '../../../components/intern/Countdown.astro';
+import Marke from '../../../components/intern/Marke.astro';
+import { GENERISCHE_MODULE } from '../../../lib/intern/menue';
+import { TABELLEN, type Tabelle } from '../../../lib/intern/schema';
+import { ladeLage, naechsteVeranstaltung, summen, veranstaltungNach, veranstaltungLabel } from '../../../lib/intern/daten';
+import { countdown } from '../../../lib/intern/auswertung';
+import { euro, nachtMinuten, tageBis, datumKurz } from '../../../lib/intern/format';
+import { darf, istVorstand } from '../../../lib/intern/rollen';
+import { env } from '../../../lib/env';
+import { googleKonfiguriert } from '../../../lib/google';
+import { authBereit } from '../../../lib/intern/auth';
+import type { Zeile } from '../../../lib/intern/sheets';
+
+export const prerender = false;
+
+const schluessel = `${Astro.params.bereich}/${Astro.params.modul}`;
+const modul = GENERISCHE_MODULE[schluessel];
+if (!modul) return new Response('Nicht gefunden', { status: 404 });
+
+const m = Astro.locals.mitglied!;
+if (modul.tabelle === 'journal' && !istVorstand(m)) return Astro.redirect('/intern?fehler=Das%20Journal%20sieht%20nur%20der%20Vorstand.');
+
+const def: Tabelle = TABELLEN[modul.tabelle];
+const lage = await ladeLage();
+const q = Astro.url.searchParams;
+const mitVeranstaltung = def.felder.some((f) => f.key === 'veranstaltung');
+const nx = naechsteVeranstaltung(lage);
+// Ohne v-Parameter zeigen Line-up, Dienstplan und Abendkassa die nächste Party; v= (leer) zeigt alle.
+const standardV = ['lineup', 'dienstplan', 'kassensturz'].includes(def.key) && nx ? String(nx.datum) : '';
+const v = q.has('v') ? (q.get('v') ?? '') : standardV;
+
+let zeilen: Zeile[] = lage.t[modul.tabelle];
+if (mitVeranstaltung && v) zeilen = zeilen.filter((z) => String(z.veranstaltung ?? '') === v);
+
+const sort = def.sortierung;
+if (sort) {
+  const feld = def.felder.find((f) => f.key === sort.feld);
+  const wert = (z: Zeile) => z[sort.feld];
+  zeilen = [...zeilen].sort((a, b) => {
+    const x = wert(a);
+    const y = wert(b);
+    let c: number;
+    if (feld?.typ === 'zeit') c = nachtMinuten(String(x ?? '')) - nachtMinuten(String(y ?? ''));
+    else if (typeof x === 'number' || typeof y === 'number') c = (Number(x) || 0) - (Number(y) || 0);
+    else if (!x && y) c = 1;
+    else if (x && !y) c = -1;
+    else c = String(x ?? '').localeCompare(String(y ?? ''));
+    return sort.absteigend ? -c : c;
+  });
+}
+
+// Zusatzansichten
+const ausgewaehlt = v ? veranstaltungNach(lage, v) : nx;
+const kassa = def.key === 'buchungen' ? summen(zeilen) : null;
+const kassaKonten = def.key === 'buchungen' ? { bar: summen(lage.t.buchungen.filter((b) => b.konto !== 'Bank')).saldo, bank: summen(lage.t.buchungen.filter((b) => b.konto === 'Bank')).saldo } : null;
+const kassensturzSumme = def.key === 'kassensturz' ? zeilen.reduce((a, z) => Math.max(a, typeof z.restumsatz === 'number' ? z.restumsatz : 0), 0) : 0;
+const schritte = def.key === 'verein' ? lage.t.verein : [];
+const erledigt = schritte.filter((z) => z.status === 'erledigt').length;
+const vorlage: Record<string, string> = mitVeranstaltung && v ? { veranstaltung: v } : {};
+if (def.key === 'kassensturz' && lage.einstellungen.wechselgeld) vorlage.wechselgeld = lage.einstellungen.wechselgeld;
+if (def.key === 'veranstaltungen' && lage.einstellungen.kapazitaet) vorlage.kapazitaet = lage.einstellungen.kapazitaet;
+
+const konfig = def.key === 'einstellungen'
+  ? [
+      { name: 'Login (AUTH_SECRET)', ok: authBereit() },
+      { name: 'Google-Zugang (Service-Account)', ok: googleKonfiguriert() },
+      { name: 'Vereinstabelle (INTERN_SHEET_ID)', ok: Boolean(env('INTERN_SHEET_ID')) && !lage.fehler },
+      { name: 'Gästeanmeldungen (SHEET_ID)', ok: Boolean(env('SHEET_ID')) && !lage.anmeldungenFehler },
+      { name: 'Mailversand (RESEND_API_KEY)', ok: Boolean(env('RESEND_API_KEY')) },
+      { name: 'Veröffentlichen (DEPLOY_HOOK_URL)', ok: Boolean(env('DEPLOY_HOOK_URL')) },
+      { name: 'Täglicher Neuaufbau (CRON_SECRET)', ok: Boolean(env('CRON_SECRET')) },
+      { name: 'Galerie-Ordner (Einstellung galerie_ordner)', ok: Boolean(lage.einstellungen.galerie_ordner) },
+    ]
+  : [];
+---
+
+<Intern titel={modul.titel}>
+  {
+    def.key === 'veranstaltungen' && ausgewaehlt && (
+      <div class="mb-6 grid gap-4 lg:grid-cols-2">
+        <Karte titel={`Countdown · ${veranstaltungLabel(ausgewaehlt)}`}>
+          <Countdown punkte={countdown(lage, ausgewaehlt)} tage={tageBis(String(ausgewaehlt.datum))} />
+        </Karte>
+        <Karte titel="So läuft die Steuerung der Website">
+          <ol class="list-decimal space-y-2 pl-5 text-sm text-fog-300">
+            <li>Party hier anlegen oder öffnen, „Auf Website“ anhaken, Titel, Zeiten, Hinweise und Preistext pflegen.</li>
+            <li>Line-up-Zeilen mit „Auf Website“ markieren, Flyer in der Galerie wählen.</li>
+            <li>Unter Verwaltung → Website die Vorschau prüfen und „Veröffentlichen“ drücken. Die Seite baut in 1–2 Minuten neu.</li>
+          </ol>
+        </Karte>
+      </div>
+    )
+  }
+
+  {
+    kassa && kassaKonten && (
+      <div class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Karte titel="Bar (Kassa)"><p class="text-display text-3xl text-white">{euro(kassaKonten.bar)}</p></Karte>
+        <Karte titel="Bank"><p class="text-display text-3xl text-white">{euro(kassaKonten.bank)}</p></Karte>
+        <Karte titel={v ? 'Einnahmen dieser Party' : 'Einnahmen gesamt'}><p class="text-display text-3xl text-white">{euro(kassa.einnahmen)}</p></Karte>
+        <Karte titel={v ? 'Ausgaben dieser Party' : 'Ausgaben gesamt'}><p class="text-display text-3xl text-white">{euro(kassa.ausgaben)}</p></Karte>
+      </div>
+    )
+  }
+
+  {
+    def.key === 'kassensturz' && (
+      <div class="mb-6 grid gap-4 lg:grid-cols-2">
+        <Karte titel="Regeln an der Kassa (aus dem Eventplan)">
+          <ul class="list-disc space-y-1.5 pl-5 text-sm text-fog-300">
+            <li>Rote Bändchen: Eintritt, festes Kontingent. Jedes Gratis-Bändchen kommt in die Bruchliste.</li>
+            <li>Blaue Bändchen: Halbpreis, nur für Personen auf der Halbpreisliste, je eines plus ein Eintrittsbändchen.</li>
+            <li>Kassensturz zu festen Zeiten ({lage.einstellungen.kassensturz || '01:00, 03:00'}) mit Kassier:in und zweiter Person.</li>
+            <li>{euro(Number(lage.einstellungen.wechselgeld) || 100)} bleiben als Wechselgeld; der Rest kommt in ein Kuvert mit Datum, Uhrzeit, Betrag, Person.</li>
+            <li>Kassenumsatz muss zur Zahl der ausgegebenen Bändchen passen.</li>
+          </ul>
+        </Karte>
+        <Karte titel="Stand dieser Party">
+          <p class="text-display text-3xl text-white">{euro(kassensturzSumme)}</p>
+          <p class="mt-1 text-sm text-fog-300">höchster eingetragener Restumsatz · {zeilen.length} Kassenstürze</p>
+          {ausgewaehlt && typeof ausgewaehlt.eintritt === 'number' && zeilen.length > 0 && (() => {
+            const letzter = [...zeilen].sort((a, b) => nachtMinuten(String(b.uhrzeit)) - nachtMinuten(String(a.uhrzeit)))[0]!;
+            const erwartet = (Number(letzter.rot) || 0) * (ausgewaehlt.eintritt as number) + (Number(letzter.blau) || 0) * ((ausgewaehlt.eintritt as number) / 2);
+            const diff = (Number(letzter.restumsatz) || 0) - erwartet;
+            return (
+              <p class="mt-3 text-sm text-fog-100">
+                Erwartet laut Bändchen um {String(letzter.uhrzeit)}: {euro(erwartet)} · Abweichung{' '}
+                <span class={Math.abs(diff) >= 20 ? 'font-bold text-white' : ''}>{euro(diff)}</span>
+              </p>
+            );
+          })()}
+        </Karte>
+      </div>
+    )
+  }
+
+  {
+    def.key === 'verein' && (
+      <div class="mb-6 grid gap-4 lg:grid-cols-3">
+        <Karte titel="Fortschritt">
+          <p class="text-display text-4xl text-white">
+            {erledigt}
+            <span class="text-2xl text-fog"> / {schritte.length}</span>
+          </p>
+          <div class="mt-3 h-2 rounded-full bg-fog-800">
+            <div class="h-2 rounded-full" style={`width:${schritte.length ? (erledigt / schritte.length) * 100 : 0}%;background:#3987e5`} />
+          </div>
+        </Karte>
+        <Karte titel="Status" class="lg:col-span-2">
+          <p class="text-sm text-fog-100">
+            {lage.einstellungen.vereinsname || 'NTGL'} · {lage.einstellungen.vereinsstatus || 'Gründung in Vorbereitung'}
+            {lage.einstellungen.zvr && ` · ZVR ${lage.einstellungen.zvr}`}
+          </p>
+          {lage.einstellungen.verein_ordner ? (
+            <a href={lage.einstellungen.verein_ordner} target="_blank" rel="noopener noreferrer" class="btn-ghost mt-4 !px-4 !py-2 text-sm">
+              Vereinsunterlagen in Drive ↗
+            </a>
+          ) : (
+            <p class="mt-2 text-sm text-fog-300">Link zu den Unterlagen fehlt (Einstellung „verein_ordner“).</p>
+          )}
+          <p class="mt-4 text-xs text-fog">Allgemeine Information nach Vereinsgesetz 2002, kein Rechtsrat. Fristen vor dem Handeln mit der Behörde abklären.</p>
+        </Karte>
+      </div>
+    )
+  }
+
+  {
+    def.key === 'einstellungen' && (
+      <div class="mb-6 grid gap-4 lg:grid-cols-2">
+        <Karte titel="Verbindungen">
+          <ul class="space-y-2 text-sm">
+            {konfig.map((c) => (
+              <li class="flex items-center justify-between gap-3">
+                <span class="text-fog-100">{c.name}</span>
+                {c.ok ? <Marke text="bereit" ton="gut" /> : <Marke text="fehlt" ton="ernst" />}
+              </li>
+            ))}
+          </ul>
+        </Karte>
+        <Karte titel="Tabelle einrichten">
+          <p class="text-sm text-fog-300">
+            Legt fehlende Blätter und Spalten im Google Sheet an, setzt Auswahllisten und fixiert die Kopfzeilen. Bestehende Daten bleiben
+            unverändert. Sicher mehrfach ausführbar.
+          </p>
+          {darf(m, 'einstellungen.schreiben') ? (
+            <form method="post" action="/intern/api/einrichten" class="mt-4">
+              <button class="btn-primary !px-4 !py-2 text-sm" type="submit">
+                Tabelle prüfen und einrichten
+              </button>
+            </form>
+          ) : (
+            <p class="mt-3 text-xs text-fog">Nur für Obmann/Obfrau bzw. Startzugang.</p>
+          )}
+        </Karte>
+      </div>
+    )
+  }
+
+  {
+    def.key === 'buchungen' && (
+      <p class="mb-4 text-xs text-fog">
+        Saldo der Ansicht: {euro(kassa?.saldo ?? 0)}{v && ausgewaehlt ? ` · Party ${datumKurz(String(ausgewaehlt.datum))}` : ''}
+      </p>
+    )
+  }
+
+  <ModulTabelle
+    def={def}
+    zeilen={zeilen}
+    lage={lage}
+    vorlage={vorlage}
+    filterVeranstaltung={mitVeranstaltung}
+    aktiveVeranstaltung={v}
+    leer={v ? 'Für diese Party gibt es noch keine Einträge.' : 'Noch keine Einträge.'}
+  />
+</Intern>

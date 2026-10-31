@@ -1,0 +1,90 @@
+---
+/**
+ * Waagrechte Balken, eine Reihe (z. B. offene Aufgaben je Person).
+ * Optional mit Plan-Spur: der Balken zeigt das Ist, die Spur dahinter den Plan.
+ * Marken: max. 14 px hoch, 4 px gerundetes Datenende, gerade an der Basislinie.
+ */
+interface Eintrag {
+  label: string;
+  wert: number;
+  plan?: number | null;
+  text?: string;
+  tip?: string;
+  warnung?: boolean;
+}
+interface Props {
+  daten: Eintrag[];
+  titel: string;
+  /** Beschriftung für die Tabellenansicht */
+  wertTitel?: string;
+  planTitel?: string;
+}
+const { daten, titel, wertTitel = 'Wert', planTitel = 'Plan' } = Astro.props;
+const max = Math.max(1, ...daten.map((d) => Math.max(d.wert, d.plan ?? 0)));
+const breite = (v: number) => `${Math.max(0, Math.min(100, (v / max) * 100))}%`;
+const mitPlan = daten.some((d) => d.plan !== undefined && d.plan !== null);
+---
+
+<figure class="space-y-2">
+  <figcaption class="sr-only">{titel}</figcaption>
+  {
+    mitPlan && (
+      <div class="flex gap-4 text-xs text-fog-300">
+        <span class="inline-flex items-center gap-1.5">
+          <span class="inline-block h-2.5 w-4 rounded-sm" style="background:#3987e5" aria-hidden="true" />
+          {wertTitel}
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="inline-block h-2.5 w-4 rounded-sm border border-fog-700 bg-fog-800" aria-hidden="true" />
+          {planTitel}
+        </span>
+      </div>
+    )
+  }
+  <ul class="space-y-2.5">
+    {
+      daten.map((d) => (
+        <li class="grid grid-cols-[minmax(6rem,10rem)_1fr_auto] items-center gap-3 text-sm" tabindex="0" data-tip={d.tip ?? `${d.label}: ${d.text ?? d.wert}`}>
+          <span class="truncate text-fog-100">{d.label}</span>
+          <span class="relative block h-3.5 rounded-r bg-transparent">
+            {d.plan !== undefined && d.plan !== null && (
+              <span class="absolute inset-y-0 left-0 rounded-r border border-fog-700 bg-fog-800/70" style={`width:${breite(d.plan)}`} />
+            )}
+            <span class="absolute inset-y-0 left-0 rounded-r-[4px]" style={`width:${breite(d.wert)};background:#3987e5`} />
+          </span>
+          <span class="flex items-center gap-1 tabular-nums text-fog-100">
+            {d.warnung && (
+              <span class="font-bold text-[#ec835a]" aria-label="Achtung">
+                !
+              </span>
+            )}
+            {d.text ?? d.wert}
+          </span>
+        </li>
+      ))
+    }
+  </ul>
+  <details class="text-xs text-fog">
+    <summary class="cursor-pointer hover:text-white">Als Tabelle</summary>
+    <table class="mt-2 w-full text-left">
+      <thead>
+        <tr>
+          <th class="py-1 font-medium">{titel}</th>
+          <th class="py-1 text-right font-medium">{wertTitel}</th>
+          {mitPlan && <th class="py-1 text-right font-medium">{planTitel}</th>}
+        </tr>
+      </thead>
+      <tbody>
+        {
+          daten.map((d) => (
+            <tr>
+              <td class="py-0.5">{d.label}</td>
+              <td class="py-0.5 text-right tabular-nums">{d.text ?? d.wert}</td>
+              {mitPlan && <td class="py-0.5 text-right tabular-nums">{d.plan ?? '–'}</td>}
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </details>
+</figure>

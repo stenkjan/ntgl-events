@@ -1,0 +1,93 @@
+---
+import Base from './Base.astro';
+import Seitenmenue from '../components/intern/Seitenmenue.astro';
+
+interface Props {
+  titel: string;
+  untertitel?: string;
+}
+const { titel, untertitel } = Astro.props;
+const ok = Astro.url.searchParams.get('ok');
+const fehler = Astro.url.searchParams.get('fehler');
+---
+
+<Base title={`${titel} | NTGL intern`} noindex>
+  <div class="intern flex min-h-dvh">
+    <aside class="sticky top-0 hidden h-dvh w-64 shrink-0 overflow-y-auto border-r border-fog-800/60 bg-ink px-4 py-6 lg:block">
+      <Seitenmenue />
+    </aside>
+
+    <div class="min-w-0 flex-1">
+      <header class="sticky top-0 z-40 border-b border-fog-800/60 bg-ink/90 backdrop-blur-md lg:hidden">
+        <details class="group">
+          <summary class="flex h-14 cursor-pointer list-none items-center justify-between px-4">
+            <span class="text-display text-2xl text-white">NTGL <span class="text-fog">intern</span></span>
+            <span class="rounded-md border border-fog-700 px-3 py-1 text-sm text-fog-100 group-open:bg-ink-700">Menü</span>
+          </summary>
+          <div class="max-h-[80dvh] overflow-y-auto border-t border-fog-800/60 px-4 py-4">
+            <Seitenmenue />
+          </div>
+        </details>
+      </header>
+
+      <main class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
+        <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+          <div class="min-w-0">
+            <h1 class="text-display text-4xl text-white sm:text-5xl">{titel}</h1>
+            {untertitel && <p class="mt-2 max-w-3xl text-fog-300">{untertitel}</p>}
+          </div>
+          <slot name="aktionen" />
+        </div>
+
+        {
+          ok && (
+            <p class="mb-5 flex items-start gap-2 rounded-xl border border-[#0ca30c]/40 bg-[#0ca30c]/10 px-4 py-3 text-sm text-fog-100" role="status">
+              <span aria-hidden="true" class="font-bold text-[#0ca30c]">✓</span>
+              {ok}
+            </p>
+          )
+        }
+        {
+          fehler && (
+            <p class="mb-5 flex items-start gap-2 rounded-xl border border-[#d03b3b]/50 bg-[#d03b3b]/10 px-4 py-3 text-sm text-fog-100" role="alert">
+              <span aria-hidden="true" class="font-bold text-[#d03b3b]">✕</span>
+              {fehler}
+            </p>
+          )
+        }
+
+        <slot />
+      </main>
+    </div>
+  </div>
+
+  <div id="ntgl-tip" role="tooltip" hidden class="pointer-events-none fixed z-50 max-w-xs rounded-lg border border-fog-700 bg-ink-800 px-3 py-2 text-xs text-fog-100 shadow-xl shadow-black/50"></div>
+</Base>
+
+<script>
+  // Hover-Tooltips für Diagramme: jedes Element mit data-tip zeigt seinen Text.
+  const tip = document.getElementById('ntgl-tip');
+  const zeigen = (text: string, x: number, y: number) => {
+    if (!tip) return;
+    tip.textContent = text;
+    tip.hidden = false;
+    const b = tip.getBoundingClientRect();
+    tip.style.left = `${Math.min(window.innerWidth - b.width - 8, Math.max(8, x + 14))}px`;
+    tip.style.top = `${Math.max(8, y - b.height - 12)}px`;
+  };
+  document.addEventListener('pointermove', (e) => {
+    const el = (e.target as Element | null)?.closest?.('[data-tip]');
+    if (el) zeigen(el.getAttribute('data-tip') ?? '', e.clientX, e.clientY);
+    else if (tip && !tip.hidden) tip.hidden = true;
+  });
+  document.addEventListener('focusin', (e) => {
+    const el = (e.target as Element | null)?.closest?.('[data-tip]');
+    if (el) {
+      const r = el.getBoundingClientRect();
+      zeigen(el.getAttribute('data-tip') ?? '', r.left + r.width / 2, r.top);
+    }
+  });
+  document.addEventListener('focusout', () => {
+    if (tip) tip.hidden = true;
+  });
+</script>

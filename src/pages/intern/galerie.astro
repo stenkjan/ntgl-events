@@ -1,0 +1,131 @@
+---
+import Intern from '../../layouts/Intern.astro';
+import Karte from '../../components/intern/Karte.astro';
+import { galerieBilder, ordnerIds, type Bild } from '../../lib/intern/drive';
+import { ladeLage, naechsteVeranstaltung, veranstaltungLabel } from '../../lib/intern/daten';
+import { darfSchreiben } from '../../lib/intern/formular';
+import { TABELLEN } from '../../lib/intern/schema';
+import { datumKurz } from '../../lib/intern/format';
+import { env } from '../../lib/env';
+
+export const prerender = false;
+
+const m = Astro.locals.mitglied!;
+const lage = await ladeLage();
+const ids = ordnerIds(lage.einstellungen.galerie_ordner);
+let bilder: Bild[] = [];
+let ordner: Array<{ id: string; name: string }> = [];
+let fehler = '';
+if (ids.length) {
+  try {
+    ({ bilder, ordner } = await galerieBilder(ids));
+  } catch (e) {
+    fehler = (e as Error).message;
+  }
+}
+const freigaben = new Map(lage.t.galerie.map((g) => [String(g.drive), g]));
+const nx = naechsteVeranstaltung(lage);
+const darfFreigeben = darfSchreiben(m, TABELLEN.galerie);
+const darfFlyer = darfSchreiben(m, TABELLEN.veranstaltungen);
+const filter = Astro.url.searchParams.get('f') ?? '';
+const gezeigt = bilder.filter((b) => (filter === 'website' ? freigaben.get(b.id)?.website === true : filter ? b.ordnerId === filter : true));
+const sa = env('GOOGLE_SERVICE_ACCOUNT_EMAIL');
+---
+
+<Intern titel="Galerie" untertitel="Fotos und Flyer aus Drive. Hochladen direkt im Drive-Ordner; hier wird gewählt, was auf ntgl.at erscheint.">
+  <Fragment slot="aktionen">
+    {
+      ordner[0] && (
+        <a href={`https://drive.google.com/drive/folders/${ordner[0].id}`} target="_blank" rel="noopener noreferrer" class="btn-primary !px-4 !py-2 text-sm">
+          In Drive hochladen ↗
+        </a>
+      )
+    }
+  </Fragment>
+
+  {
+    !ids.length ? (
+      <Karte titel="Galerie einrichten">
+        <ol class="list-decimal space-y-2 pl-5 text-sm text-fog-300">
+          <li>Im Drive-Ordner NTGL einen Unterordner „Galerie“ anlegen (gern mit einem Unterordner je Party).</li>
+          <li>
+            Den Ordner für <span class="font-mono text-fog-100">{sa || 'den Service-Account'}</span> als Betrachter freigeben.
+          </li>
+          <li>Die Ordner-ID unter Einstellungen bei „galerie_ordner“ eintragen.</li>
+        </ol>
+      </Karte>
+    ) : fehler ? (
+      <p class="rounded-xl bg-signal/20 px-4 py-3 text-sm text-white">
+        Drive nicht lesbar: {fehler}. Ist der Ordner für {sa} freigegeben?
+      </p>
+    ) : (
+      <>
+        <div class="mb-5 flex flex-wrap gap-2 text-sm">
+          <a href="?" class:list={['rounded-full border px-3 py-1', !filter ? 'border-fog bg-ink-700 text-white' : 'border-fog-700 text-fog-300 hover:text-white']}>
+            Alle ({bilder.length})
+          </a>
+          <a href="?f=website" class:list={['rounded-full border px-3 py-1', filter === 'website' ? 'border-fog bg-ink-700 text-white' : 'border-fog-700 text-fog-300 hover:text-white']}>
+            Auf Website ({bilder.filter((b) => freigaben.get(b.id)?.website === true).length})
+          </a>
+          {[...new Map(bilder.map((b) => [b.ordnerId, b.ordner])).entries()].map(([id, name]) => (
+            <a href={`?f=${id}`} class:list={['rounded-full border px-3 py-1', filter === id ? 'border-fog bg-ink-700 text-white' : 'border-fog-700 text-fog-300 hover:text-white']}>
+              {name}
+            </a>
+          ))}
+        </div>
+
+        {gezeigt.length === 0 ? (
+          <p class="rounded-2xl border border-dashed border-fog-700 p-8 text-center text-fog-300">Keine Bilder in diesem Ordner.</p>
+        ) : (
+          <ul class="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+            {gezeigt.map((b) => {
+              const fg = freigaben.get(b.id);
+              const online = fg?.website === true;
+              const istFlyer = nx && String(nx.flyer ?? '') === b.id;
+              return (
+                <li class="overflow-hidden rounded-2xl border border-fog-800/80 bg-ink-800/60">
+                  <a href={`/intern/api/bild/${b.id}?g=gross`} target="_blank" rel="noopener">
+                    <img src={`/intern/api/bild/${b.id}`} alt={b.name} loading="lazy" class="aspect-square w-full object-cover" />
+                  </a>
+                  <div class="space-y-2 p-3 text-xs">
+                    <p class="truncate text-fog-100" title={b.name}>{b.name}</p>
+                    <p class="text-fog">{b.ordner} · {datumKurz((b.aufgenommen ?? b.erstellt).slice(0, 10).replace(/:/g, '-'))}</p>
+                    <div class="flex flex-wrap gap-2">
+                      {darfFreigeben && (
+                        <form method="post" action="/intern/api/galerie">
+                          <input type="hidden" name="id" value={b.id} />
+                          <input type="hidden" name="titel" value={b.name.replace(/\.[a-z0-9]+$/i, '')} />
+                          <input type="hidden" name="aktion" value={online ? 'aus' : 'an'} />
+                          <input type="hidden" name="zurueck" value={Astro.url.pathname + Astro.url.search} />
+                          <button class:list={['rounded-full border px-2.5 py-1', online ? 'border-[#0ca30c]/60 text-white' : 'border-fog-700 text-fog-100 hover:border-fog']}>
+                            {online ? '✓ auf Website' : 'Für Website freigeben'}
+                          </button>
+                        </form>
+                      )}
+                      {darfFlyer && nx && (
+                        <form method="post" action="/intern/api/galerie">
+                          <input type="hidden" name="id" value={b.id} />
+                          <input type="hidden" name="aktion" value="flyer" />
+                          <input type="hidden" name="v" value={String(nx.datum)} />
+                          <input type="hidden" name="zurueck" value={Astro.url.pathname + Astro.url.search} />
+                          <button class:list={['rounded-full border px-2.5 py-1', istFlyer ? 'border-[#0ca30c]/60 text-white' : 'border-fog-700 text-fog-100 hover:border-fog']} disabled={istFlyer}>
+                            {istFlyer ? '✓ Flyer' : `Flyer ${datumKurz(String(nx.datum)).slice(0, 6)}`}
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        <p class="mt-5 text-xs text-fog">
+          Freigegebene Fotos und der Flyer erscheinen erst nach „Veröffentlichen“ unter Verwaltung → Website. Nur Fotos freigeben, auf denen alle
+          Erkennbaren einverstanden sind.
+          {nx && ` Flyer-Knopf gilt für ${veranstaltungLabel(nx)}.`}
+        </p>
+      </>
+    )
+  }
+</Intern>

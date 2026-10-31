@@ -1,0 +1,39 @@
+---
+import { medienUrl, type OeffentlichesBild } from '../lib/website';
+
+interface Props {
+  bilder: OeffentlichesBild[];
+}
+const { bilder } = Astro.props;
+---
+
+<section id="galerie" class="border-t border-fog-800/60">
+  <div class="container-narrow py-14 sm:py-20">
+    <h2 class="text-display mb-8 text-5xl text-white sm:text-6xl">Galerie</h2>
+    <ul class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      {
+        bilder.map((b) => (
+          <li>
+            <figure class="overflow-hidden rounded-xl ring-1 ring-fog-800/80">
+              <img
+                src={`${medienUrl(b.id)}?g=klein`}
+                alt={b.titel ?? 'Foto von einer NTGL-Party'}
+                width="640"
+                height="640"
+                loading="lazy"
+                decoding="async"
+                class="aspect-square w-full object-cover"
+              />
+              {(b.titel || b.credit) && (
+                <figcaption class="bg-ink-800/80 px-3 py-2 text-xs text-fog-300">
+                  {b.titel}
+                  {b.credit && <span class="text-fog"> · Foto: {b.credit}</span>}
+                </figcaption>
+              )}
+            </figure>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
