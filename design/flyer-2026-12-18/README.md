@@ -10,7 +10,7 @@ Quadratischer Flyer (2160 px) als HTML, gerendert mit Playwright.
 Neu rendern:
 
 ```bash
-node render.js "$PWD/flyer.html" "$PWD/out.png"
+node render.cjs "$PWD/flyer.html" "$PWD/out.png"
 ```
 
 Web-Version: auf 1600 px verkleinern und als `public/flyers/2026-12-18.jpg` ablegen.
