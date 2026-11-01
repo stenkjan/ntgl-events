@@ -62,6 +62,12 @@ const nacht = (zeit: string) => {
   return min < 720 ? min + 1440 : min;
 };
 
+/** Genre und BPM wie in den Event-Dateien: „Vocal · 150–160 BPM“ */
+const mitBpm = (genre: string, bpm: string): string | undefined => {
+  const tempo = bpm && !/bpm/i.test(bpm) ? `${bpm} BPM` : bpm;
+  return [genre, tempo].filter(Boolean).join(' · ') || undefined;
+};
+
 /** Aus den Arbeitsblättern den öffentlichen Stand bauen (Vorschau und Veröffentlichung) */
 export function freigabeBauen(
   t: { veranstaltungen: Zeile[]; lineup: Zeile[]; galerie: Zeile[] },
@@ -79,7 +85,7 @@ export function freigabeBauen(
         .map((l) => ({
           time: s(l.start) || undefined,
           artist: s(l.artist),
-          genre: s(l.genre) || undefined,
+          genre: mitBpm(s(l.genre), s(l.bpm)),
           links: /^https?:\/\//.test(s(l.link)) ? [{ label: s(l.linkTitel) || 'Link', url: s(l.link) }] : [],
         }));
       return {
