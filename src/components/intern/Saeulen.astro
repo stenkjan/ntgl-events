@@ -1,0 +1,78 @@
+---
+/**
+ * Gruppierte Säulen: Einnahmen (Blau) und Ausgaben (Orange) je Party.
+ * Farbpaar auf der dunklen Fläche geprüft (CVD ΔE 26,8). Legende plus Ergebnis als Text unter jeder Gruppe.
+ */
+interface Gruppe {
+  label: string;
+  einnahmen: number | null;
+  ausgaben: number | null;
+  fussnote?: string;
+}
+interface Props {
+  gruppen: Gruppe[];
+  titel: string;
+  format: (n: number | null) => string;
+}
+const { gruppen, titel, format } = Astro.props;
+const max = Math.max(1, ...gruppen.flatMap((g) => [g.einnahmen ?? 0, g.ausgaben ?? 0]));
+const hoehe = (v: number | null) => `${v ? Math.max(2, (v / max) * 100) : 0}%`;
+const FARBE = { ein: '#3987e5', aus: '#d95926' };
+---
+
+<figure class="space-y-3">
+  <figcaption class="sr-only">{titel}</figcaption>
+  <div class="flex gap-4 text-xs text-fog-300">
+    <span class="inline-flex items-center gap-1.5"><span class="inline-block h-2.5 w-4 rounded-sm" style={`background:${FARBE.ein}`} aria-hidden="true"></span>Einnahmen</span>
+    <span class="inline-flex items-center gap-1.5"><span class="inline-block h-2.5 w-4 rounded-sm" style={`background:${FARBE.aus}`} aria-hidden="true"></span>Ausgaben</span>
+  </div>
+  <div class="flex h-48 items-end gap-6 border-b border-fog-700 px-1">
+    {
+      gruppen.map((g) => (
+        <div class="flex h-full flex-1 items-end justify-center gap-[2px]">
+          <span
+            class="block w-5 max-w-[24px] rounded-t-[4px]"
+            style={`height:${hoehe(g.einnahmen)};background:${FARBE.ein}`}
+            tabindex="0"
+            data-tip={`${g.label} · Einnahmen ${format(g.einnahmen)}`}
+          />
+          <span
+            class="block w-5 max-w-[24px] rounded-t-[4px]"
+            style={`height:${hoehe(g.ausgaben)};background:${FARBE.aus}`}
+            tabindex="0"
+            data-tip={`${g.label} · Ausgaben ${format(g.ausgaben)}`}
+          />
+        </div>
+      ))
+    }
+  </div>
+  <div class="flex gap-6 px-1">
+    {
+      gruppen.map((g) => (
+        <div class="flex-1 text-center text-xs">
+          <p class="text-fog-100">{g.label}</p>
+          {g.fussnote && <p class="text-fog">{g.fussnote}</p>}
+        </div>
+      ))
+    }
+  </div>
+  <details class="text-xs text-fog">
+    <summary class="cursor-pointer hover:text-white">Als Tabelle</summary>
+    <table class="mt-2 w-full text-left">
+      <thead>
+        <tr><th class="py-1 font-medium">Party</th><th class="py-1 text-right font-medium">Einnahmen</th><th class="py-1 text-right font-medium">Ausgaben</th></tr>
+      </thead>
+      <tbody>
+        {
+          gruppen.map((g) => (
+            <tr>
+              <td class="py-0.5">{g.label}</td>
+              <td class="py-0.5 text-right tabular-nums">{format(g.einnahmen)}</td>
+              <td class="py-0.5 text-right tabular-nums">{format(g.ausgaben)}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </details>
+</figure>

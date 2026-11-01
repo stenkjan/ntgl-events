@@ -1,0 +1,97 @@
+---
+/**
+ * Kumulierte Linie (z. B. Anmeldungen bis zur Party). Eine Reihe, daher keine Legende.
+ * 2-px-Linie, Fläche 10 % Deckkraft, Endpunkt mit Ring, Hover je Tag.
+ */
+interface Punkt {
+  tag: string;
+  label: string;
+  wert: number;
+}
+interface Props {
+  punkte: Punkt[];
+  titel: string;
+  /** Waagrechte Referenz, z. B. Kapazität */
+  referenz?: { wert: number; label: string } | null;
+}
+const { punkte, titel, referenz } = Astro.props;
+const B = 640;
+const H = 200;
+const P = { l: 36, r: 16, o: 16, u: 28 };
+const max = Math.max(1, referenz?.wert ?? 0, ...punkte.map((p) => p.wert));
+const schritt = max <= 10 ? 2 : max <= 50 ? 10 : max <= 200 ? 50 : 100;
+const oben = Math.ceil(max / schritt) * schritt;
+const x = (i: number) => P.l + (punkte.length <= 1 ? 0 : (i / (punkte.length - 1)) * (B - P.l - P.r));
+const y = (v: number) => P.o + (1 - v / oben) * (H - P.o - P.u);
+const linie = punkte.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.wert).toFixed(1)}`).join(' ');
+const flaeche = punkte.length
+  ? `${linie} L${x(punkte.length - 1).toFixed(1)},${y(0)} L${x(0).toFixed(1)},${y(0)} Z`
+  : '';
+const ticks = Array.from({ length: Math.floor(oben / schritt) + 1 }, (_, i) => i * schritt);
+const letzter = punkte.at(-1);
+const breiteJe = punkte.length > 1 ? (B - P.l - P.r) / (punkte.length - 1) : B - P.l - P.r;
+---
+
+<figure class="space-y-2">
+  <figcaption class="sr-only">{titel}</figcaption>
+  {
+    punkte.length === 0 ? (
+      <p class="rounded-xl border border-dashed border-fog-700 p-6 text-center text-sm text-fog-300">Noch keine Anmeldungen.</p>
+    ) : (
+      <svg viewBox={`0 0 ${B} ${H}`} class="h-auto w-full" role="img" aria-label={titel}>
+        {ticks.map((t) => (
+          <g>
+            <line x1={P.l} x2={B - P.r} y1={y(t)} y2={y(t)} stroke="#22312f" stroke-width="1" />
+            <text x={P.l - 8} y={y(t) + 4} text-anchor="end" font-size="11" fill="#8fa9a7">
+              {t}
+            </text>
+          </g>
+        ))}
+        {referenz && (
+          <g>
+            <line x1={P.l} x2={B - P.r} y1={y(referenz.wert)} y2={y(referenz.wert)} stroke="#c3d0ce" stroke-width="1" />
+            <text x={B - P.r} y={y(referenz.wert) - 6} text-anchor="end" font-size="11" fill="#c3d0ce">
+              {referenz.label}
+            </text>
+          </g>
+        )}
+        <path d={flaeche} fill="#3987e5" fill-opacity="0.1" />
+        <path d={linie} fill="none" stroke="#3987e5" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+        {letzter && (
+          <g>
+            <circle cx={x(punkte.length - 1)} cy={y(letzter.wert)} r="6" fill="#141a1b" />
+            <circle cx={x(punkte.length - 1)} cy={y(letzter.wert)} r="4" fill="#3987e5" />
+            <text x={x(punkte.length - 1) - 10} y={y(letzter.wert) - 10} text-anchor="end" font-size="12" font-weight="700" fill="#e8eeed">
+              {letzter.wert}
+            </text>
+          </g>
+        )}
+        <text x={P.l} y={H - 8} font-size="11" fill="#8fa9a7">
+          {punkte[0]!.label}
+        </text>
+        <text x={B - P.r} y={H - 8} text-anchor="end" font-size="11" fill="#8fa9a7">
+          {letzter!.label}
+        </text>
+        {punkte.map((p, i) => (
+          <rect
+            x={x(i) - breiteJe / 2}
+            y={P.o}
+            width={Math.max(4, breiteJe)}
+            height={H - P.o - P.u}
+            fill="transparent"
+            data-tip={`${p.label}: ${p.wert} angemeldet`}
+          />
+        ))}
+      </svg>
+    )
+  }
+  <details class="text-xs text-fog">
+    <summary class="cursor-pointer hover:text-white">Als Tabelle</summary>
+    <table class="mt-2 w-full text-left">
+      <thead><tr><th class="py-1 font-medium">Tag</th><th class="py-1 text-right font-medium">Summe</th></tr></thead>
+      <tbody>
+        {punkte.map((p) => <tr><td class="py-0.5">{p.label}</td><td class="py-0.5 text-right tabular-nums">{p.wert}</td></tr>)}
+      </tbody>
+    </table>
+  </details>
+</figure>

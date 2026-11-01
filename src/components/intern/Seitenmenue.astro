@@ -1,0 +1,80 @@
+---
+import { MENUE, aktiv } from '../../lib/intern/menue';
+import { rollenTitel } from '../../lib/intern/rollen';
+
+const m = Astro.locals.mitglied;
+const pfad = Astro.url.pathname;
+---
+
+<nav class="flex h-full flex-col gap-6" aria-label="Mitgliederbereich">
+  <a href="/intern" class="flex items-center gap-3 px-2">
+    <img src="/ntgl_logo.png" alt="" width="32" height="32" class="h-8 w-8 invert mix-blend-screen" />
+    <span class="text-display text-2xl text-white">NTGL <span class="text-fog">intern</span></span>
+  </a>
+
+  <ul class="flex flex-col gap-1 text-sm">
+    {
+      MENUE.map((g) => (
+        <li>
+          {g.href ? (
+            <a
+              href={g.href}
+              class:list={[
+                'flex items-center gap-3 rounded-lg px-3 py-2 font-medium transition',
+                aktiv(pfad, g.href) ? 'bg-ink-700 text-white' : 'text-fog-300 hover:bg-ink-700/60 hover:text-white',
+              ]}
+              aria-current={aktiv(pfad, g.href) ? 'page' : undefined}
+            >
+              <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d={g.icon} />
+              </svg>
+              {g.titel}
+            </a>
+          ) : (
+            <>
+              <p class="mt-3 flex items-center gap-3 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-fog">
+                <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d={g.icon} />
+                </svg>
+                {g.titel}
+              </p>
+              <ul class="ml-5 flex flex-col border-l border-fog-800/80 pl-2">
+                {g.punkte.map((p) => (
+                  <li>
+                    <a
+                      href={p.href}
+                      class:list={[
+                        'block rounded-md px-3 py-1.5 transition',
+                        aktiv(pfad, p.href) ? 'bg-ink-700 text-white' : 'text-fog-300 hover:bg-ink-700/60 hover:text-white',
+                      ]}
+                      aria-current={aktiv(pfad, p.href) ? 'page' : undefined}
+                    >
+                      {p.titel}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </li>
+      ))
+    }
+  </ul>
+
+  {
+    m && (
+      <div class="mt-auto rounded-xl border border-fog-800/80 bg-ink-800/60 p-3 text-sm">
+        <p class="font-medium text-white">{m.name}</p>
+        <p class="text-fog-300">
+          {rollenTitel(m)}
+          {m.funktion && <span class="text-fog"> · {m.funktion}</span>}
+        </p>
+        <form method="post" action="/intern/abmelden" class="mt-3">
+          <button type="submit" class="text-xs text-fog underline decoration-fog-700 underline-offset-4 hover:text-white">
+            Abmelden
+          </button>
+        </form>
+      </div>
+    )
+  }
+</nav>

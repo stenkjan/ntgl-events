@@ -1,0 +1,39 @@
+---
+import { TON_STIL } from '../../lib/intern/anzeige';
+import type { Punkt } from '../../lib/intern/auswertung';
+
+interface Props {
+  punkte: Punkt[];
+  /** Tage bis zur Party (negativ = vorbei) */
+  tage: number;
+}
+const { punkte, tage } = Astro.props;
+const tagText = (t: number) => (t === 0 ? 'am Abend' : t < 0 ? `${-t} Tage vorher` : `${t} Tage danach`);
+// Vergleiche hier im Frontmatter, nicht im Template (der Astro-Compiler liest „<“ dort als Tag).
+const zeilen = punkte.map((p) => {
+  const faellig = p.tag <= 0 ? tage <= -p.tag : -tage >= p.tag;
+  const stil = p.erledigt === true ? TON_STIL.gut : p.erledigt === false && faellig ? TON_STIL.ernst : TON_STIL.neutral;
+  const label = p.erledigt === true ? 'erledigt' : p.erledigt === false ? (faellig ? 'fällig' : 'offen') : 'von Hand';
+  return { ...p, stil, label, symbol: p.erledigt === true ? '✓' : stil.symbol, wann: tagText(p.tag) };
+});
+---
+
+<ol class="space-y-2">
+  {
+    zeilen.map((p) => (
+      <li class="flex items-start gap-3 text-sm">
+        <span class="mt-0.5 w-5 shrink-0 text-center font-bold" style={`color:${p.stil.farbe}`} aria-hidden="true">
+          {p.symbol}
+        </span>
+        <div class="min-w-0 flex-1">
+          <a href={p.link} class="font-medium text-white hover:underline">
+            {p.titel}
+          </a>
+          <p class="text-xs text-fog-300">
+            {p.wann} · {p.label} · {p.beleg}
+          </p>
+        </div>
+      </li>
+    ))
+  }
+</ol>

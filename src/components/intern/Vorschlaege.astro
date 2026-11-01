@@ -1,0 +1,48 @@
+---
+import { TON_STIL, type Ton } from '../../lib/intern/anzeige';
+import type { Stufe, Vorschlag } from '../../lib/intern/auswertung';
+
+interface Props {
+  liste: Vorschlag[];
+  max?: number;
+}
+const { liste, max = 12 } = Astro.props;
+const TON: Record<Stufe, Ton> = { kritisch: 'kritisch', wichtig: 'ernst', hinweis: 'neutral' };
+const NAME: Record<Stufe, string> = { kritisch: 'Dringend', wichtig: 'Wichtig', hinweis: 'Hinweis' };
+const gezeigt = liste.slice(0, max);
+---
+
+{
+  gezeigt.length === 0 ? (
+    <p class="flex items-center gap-2 text-sm text-fog-100">
+      <span class="font-bold" style={`color:${TON_STIL.gut.farbe}`} aria-hidden="true">
+        ✓
+      </span>
+      Nichts offen. Alle Regeln sind erfüllt.
+    </p>
+  ) : (
+    <ul class="divide-y divide-fog-800/70">
+      {gezeigt.map((v) => {
+        const stil = TON_STIL[TON[v.stufe]];
+        return (
+          <li class="flex gap-3 py-3 first:pt-0 last:pb-0">
+            <span class="mt-0.5 w-5 shrink-0 text-center font-bold" style={`color:${stil.farbe}`} aria-hidden="true">
+              {stil.symbol}
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-white">
+                <span class="sr-only">{NAME[v.stufe]}: </span>
+                {v.titel}
+              </p>
+              <p class="mt-0.5 text-sm text-fog-300">{v.begruendung}</p>
+            </div>
+            <a href={v.link} class="shrink-0 self-start rounded-full border border-fog-700 px-3 py-1 text-xs text-fog-100 transition hover:border-fog hover:bg-ink-700">
+              {v.linkText}
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  )
+}
+{liste.length > max && <p class="mt-3 text-xs text-fog">… und {liste.length - max} weitere</p>}

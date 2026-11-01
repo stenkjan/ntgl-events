@@ -1,0 +1,95 @@
+---
+import Intern from '../../../layouts/Intern.astro';
+import Karte from '../../../components/intern/Karte.astro';
+import Saeulen from '../../../components/intern/Saeulen.astro';
+import { historie, ladeLage } from '../../../lib/intern/daten';
+import { datumKurz, euro, prozent, zahl } from '../../../lib/intern/format';
+
+export const prerender = false;
+
+const lage = await ladeLage();
+const h = historie(lage);
+const mitKosten = h.filter((x) => x.ausgaben !== null && x.gaeste);
+const kostenJeGast = mitKosten.map((x) => (x.ausgaben as number) / (x.gaeste as number));
+const schnitt = (werte: number[]) => (werte.length ? werte.reduce((a, b) => a + b, 0) / werte.length : null);
+const mitErgebnis = h.filter((x) => x.ergebnis !== null);
+const zuWenig = h.length > 0 && h.length < 5;
+---
+
+<Intern titel="Historie" untertitel="Alle abgeschlossenen Partys: Gäste, Geld und Kassendifferenz. Ältere Werte aus den Kostenaufstellungen im Archiv-Ordner.">
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <Karte titel="Partys erfasst"><p class="text-display text-4xl text-white">{h.length}</p></Karte>
+    <Karte titel="Ø Gäste"><p class="text-display text-4xl text-white">{zahl(schnitt(h.filter((x) => x.gaeste).map((x) => x.gaeste as number)))}</p></Karte>
+    <Karte titel="Ø Kosten je Gast"><p class="text-display text-4xl text-white">{euro(schnitt(kostenJeGast))}</p><p class="mt-1 text-xs text-fog">aus {mitKosten.length} Partys mit Gästezahl</p></Karte>
+    <Karte titel="Ø Ergebnis"><p class="text-display text-4xl text-white">{euro(schnitt(mitErgebnis.map((x) => x.ergebnis as number)), true)}</p><p class="mt-1 text-xs text-fog">aus {mitErgebnis.length} Partys</p></Karte>
+  </div>
+
+  {
+    zuWenig && (
+      <p class="mt-4 text-sm text-fog-300">
+        Hinweis: {h.length} Partys sind zu wenig für ein Trendurteil (Regel: ab etwa fünf). Die Zahlen sind Einzelwerte, keine Prognose.
+      </p>
+    )
+  }
+
+  <div class="mt-4">
+    <Karte titel="Einnahmen und Ausgaben je Party">
+      {
+        h.length ? (
+          <Saeulen
+            titel="Einnahmen und Ausgaben je Party"
+            format={(n) => euro(n, true)}
+            gruppen={h.map((x) => ({
+              label: datumKurz(x.datum),
+              einnahmen: x.einnahmen,
+              ausgaben: x.ausgaben,
+              fussnote: x.ergebnis !== null ? `Ergebnis ${euro(x.ergebnis, true)}` : 'unvollständig',
+            }))}
+          />
+        ) : (
+          <p class="text-sm text-fog-300">Noch keine abgeschlossenen Partys erfasst.</p>
+        )
+      }
+    </Karte>
+  </div>
+
+  <div class="mt-4 overflow-x-auto rounded-2xl border border-fog-800/80 bg-ink-800/50">
+    <table class="w-full min-w-[48rem] text-left text-sm">
+      <thead class="border-b border-fog-800 text-xs uppercase tracking-wider text-fog">
+        <tr>
+          <th class="px-4 py-3 font-medium">Datum</th>
+          <th class="px-4 py-3 font-medium">Party</th>
+          <th class="px-4 py-3 text-right font-medium">Gäste</th>
+          <th class="px-4 py-3 text-right font-medium">Anmeldungen</th>
+          <th class="px-4 py-3 text-right font-medium">Erscheinen</th>
+          <th class="px-4 py-3 text-right font-medium">Einnahmen</th>
+          <th class="px-4 py-3 text-right font-medium">Ausgaben</th>
+          <th class="px-4 py-3 text-right font-medium">Ergebnis</th>
+          <th class="px-4 py-3 text-right font-medium">Kassendifferenz</th>
+          <th class="px-4 py-3 font-medium">Quelle</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-fog-800/70">
+        {
+          [...h].reverse().map((x) => (
+            <tr>
+              <td class="px-4 py-2 text-white">{datumKurz(x.datum)}</td>
+              <td class="px-4 py-2">{x.titel}</td>
+              <td class="px-4 py-2 text-right tabular-nums">{zahl(x.gaeste)}</td>
+              <td class="px-4 py-2 text-right tabular-nums">{x.anmeldungen || '–'}</td>
+              <td class="px-4 py-2 text-right tabular-nums">{x.gaeste && x.anmeldungen ? prozent(x.gaeste / x.anmeldungen) : '–'}</td>
+              <td class="px-4 py-2 text-right tabular-nums">{euro(x.einnahmen, true)}</td>
+              <td class="px-4 py-2 text-right tabular-nums">{euro(x.ausgaben, true)}</td>
+              <td class="px-4 py-2 text-right tabular-nums text-white">{euro(x.ergebnis, true)}</td>
+              <td class="px-4 py-2 text-right tabular-nums" data-tip="Gezählter Überschuss minus berechnetes Ergebnis">{euro(x.differenz, true)}</td>
+              <td class="px-4 py-2 text-xs text-fog">{x.quelle}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+  <p class="mt-3 text-xs text-fog">
+    Gäste und Archivwerte pflegst du unter Verwaltung → Planung im jeweiligen Eintrag. Ab dem Kassabuch kommen Einnahmen und Ausgaben von dort.
+  </p>
+</Intern>

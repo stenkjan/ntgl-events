@@ -1,0 +1,120 @@
+---
+import Intern from '../../../layouts/Intern.astro';
+import Karte from '../../../components/intern/Karte.astro';
+import Balken from '../../../components/intern/Balken.astro';
+import ModulTabelle from '../../../components/intern/ModulTabelle.astro';
+import { budgetFuer, ladeLage, naechsteVeranstaltung, veranstaltungAuswahl, veranstaltungNach, veranstaltungLabel } from '../../../lib/intern/daten';
+import { euro, prozent } from '../../../lib/intern/format';
+import { darfSchreiben } from '../../../lib/intern/formular';
+import { TABELLEN } from '../../../lib/intern/schema';
+
+export const prerender = false;
+
+const m = Astro.locals.mitglied!;
+const lage = await ladeLage();
+const q = Astro.url.searchParams;
+const nx = naechsteVeranstaltung(lage);
+const v = q.get('v') || (nx ? String(nx.datum) : '');
+const party = v ? veranstaltungNach(lage, v) : undefined;
+const zeilen = v ? budgetFuer(lage, v) : [];
+const aus = zeilen.filter((z) => z.art === 'Ausgabe');
+const ein = zeilen.filter((z) => z.art === 'Einnahme');
+const planAus = aus.reduce((a, z) => a + (z.plan ?? 0), 0);
+const istAus = aus.reduce((a, z) => a + z.ist, 0);
+const planEin = ein.reduce((a, z) => a + (z.plan ?? 0), 0);
+const istEin = ein.reduce((a, z) => a + z.ist, 0);
+const eintritt = typeof party?.eintritt === 'number' ? party.eintritt : null;
+const breakEven = eintritt && planAus ? Math.ceil(planAus / eintritt) : null;
+const offeneVorschlaege = zeilen.filter((z) => z.plan === null && z.vorschlag !== null);
+const schreiben = darfSchreiben(m, TABELLEN.budget);
+const budgetZeilen = lage.t.budget.filter((b) => String(b.veranstaltung) === v);
+---
+
+<Intern titel="Budget" untertitel="Plan je Kategorie, Ist aus dem Kassabuch. Vorschläge kommen aus den Kostenaufstellungen früherer Partys.">
+  <form method="get" class="mb-5 flex items-center gap-2">
+    <label for="v" class="text-sm text-fog-300">Party</label>
+    <select id="v" name="v" class="field !w-auto !py-2 text-sm" onchange="this.form.requestSubmit()">
+      {veranstaltungAuswahl(lage).map((o) => <option value={o.wert} selected={o.wert === v}>{o.label}</option>)}
+    </select>
+  </form>
+
+  {
+    !party ? (
+      <p class="rounded-2xl border border-dashed border-fog-700 p-8 text-center text-fog-300">Bitte zuerst eine Party unter Planung anlegen.</p>
+    ) : (
+      <>
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <Karte titel="Ausgaben Plan"><p class="text-display text-4xl text-white">{euro(planAus, true)}</p></Karte>
+          <Karte titel="Ausgaben Ist">
+            <p class="text-display text-4xl text-white">{euro(istAus, true)}</p>
+            <p class="mt-1 text-sm text-fog-300">Budget-Auslastung {planAus ? prozent(istAus / planAus) : '–'}</p>
+          </Karte>
+          <Karte titel="Einnahmen Plan / Ist">
+            <p class="text-display text-4xl text-white">{euro(istEin, true)}</p>
+            <p class="mt-1 text-sm text-fog-300">Plan {euro(planEin, true)}</p>
+          </Karte>
+          <Karte titel="Kostendeckung">
+            <p class="text-display text-4xl text-white">{breakEven ?? '–'}</p>
+            <p class="mt-1 text-sm text-fog-300">
+              {breakEven ? `zahlende Gäste bei ${euro(eintritt)} Eintritt` : eintritt ? 'Plan-Ausgaben fehlen' : 'Eintritt bei der Party eintragen'}
+            </p>
+          </Karte>
+        </div>
+
+        <div class="mt-4 grid gap-4 xl:grid-cols-5">
+          <Karte titel={`Ausgaben je Kategorie · ${veranstaltungLabel(party)}`} class="xl:col-span-3">
+            {aus.length ? (
+              <Balken
+                titel="Kategorie"
+                wertTitel="Ist"
+                planTitel="Plan"
+                daten={aus.map((z) => ({
+                  label: z.kategorie,
+                  wert: z.ist,
+                  plan: z.plan ?? z.vorschlag,
+                  text: `${euro(z.ist, true)} / ${z.plan !== null ? euro(z.plan, true) : `≈ ${euro(z.vorschlag, true)}`}`,
+                  warnung: z.plan !== null && z.ist > z.plan,
+                  tip: `${z.kategorie}: Ist ${euro(z.ist)} · Plan ${z.plan !== null ? euro(z.plan) : 'offen'}${z.vorschlag !== null ? ` · Vorschlag ${euro(z.vorschlag)} (Ø aus ${z.vorschlagN})` : ''}`,
+                }))}
+              />
+            ) : (
+              <p class="text-sm text-fog-300">Noch keine Ausgaben geplant oder gebucht.</p>
+            )}
+          </Karte>
+          <Karte titel="Vorschlag aus früheren Partys" class="xl:col-span-2">
+            {offeneVorschlaege.length ? (
+              <>
+                <ul class="space-y-1.5 text-sm">
+                  {offeneVorschlaege.map((z) => (
+                    <li class="flex justify-between gap-3">
+                      <span class="text-fog-100">{z.kategorie}</span>
+                      <span class="tabular-nums text-white">
+                        {euro(z.vorschlag, true)} <span class="text-xs text-fog">Ø aus {z.vorschlagN}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p class="mt-3 text-xs text-fog">
+                  Schätzung aus {Math.max(...offeneVorschlaege.map((z) => z.vorschlagN))} Partys. Unter fünf Partys ist das ein Anhaltspunkt, keine Prognose.
+                </p>
+                {schreiben && (
+                  <form method="post" action="/intern/api/budget-uebernehmen" class="mt-4">
+                    <input type="hidden" name="v" value={v} />
+                    <button class="btn-primary !px-4 !py-2 text-sm" type="submit">
+                      Als Plan übernehmen
+                    </button>
+                  </form>
+                )}
+              </>
+            ) : (
+              <p class="text-sm text-fog-300">Alle Kategorien mit Archivwerten haben bereits einen Plan.</p>
+            )}
+          </Karte>
+        </div>
+
+        <h2 class="text-display mb-3 mt-8 text-3xl text-white">Budgetzeilen</h2>
+        <ModulTabelle def={TABELLEN.budget} zeilen={budgetZeilen} lage={lage} vorlage={{ veranstaltung: v }} leer="Für diese Party gibt es noch keine Budgetzeilen." />
+      </>
+    )
+  }
+</Intern>

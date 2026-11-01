@@ -1,0 +1,251 @@
+---
+import FormFeld from './FormFeld.astro';
+import Marke from './Marke.astro';
+import { anzeigen, istStatusFeld } from '../../lib/intern/anzeige';
+import { namenListe, veranstaltungAuswahl, type Lage } from '../../lib/intern/daten';
+import { darfEigene, darfSchreiben } from '../../lib/intern/formular';
+import { heuteIso } from '../../lib/intern/format';
+import type { Tabelle } from '../../lib/intern/schema';
+import type { Zeile } from '../../lib/intern/sheets';
+
+interface Props {
+  def: Tabelle;
+  /** Bereits gefilterte und sortierte Zeilen für die Liste */
+  zeilen: Zeile[];
+  lage: Lage;
+  /** Spalten der Liste (Feld-Keys); Standard: Felder mit liste !== false */
+  spalten?: string[];
+  /** Vorbelegung neuer Einträge */
+  vorlage?: Record<string, string>;
+  leer?: string;
+  /** Auswahl „Veranstaltung“ über der Liste */
+  filterVeranstaltung?: boolean;
+  /** Aktuell gefilterte Party (auch wenn sie als Standard gesetzt ist) */
+  aktiveVeranstaltung?: string;
+  titelNeu?: string;
+}
+
+const { def, zeilen, lage, vorlage = {}, leer = 'Noch keine Einträge.', filterVeranstaltung = false, titelNeu = 'Neu' } = Astro.props;
+const m = Astro.locals.mitglied;
+const url = Astro.url;
+const bearbeitenId = url.searchParams.get('bearbeiten');
+const neu = url.searchParams.has('neu');
+const vFilter = Astro.props.aktiveVeranstaltung ?? url.searchParams.get('v') ?? '';
+
+const schreiben = darfSchreiben(m, def);
+const alle = lage.t[def.key as keyof Lage['t']] ?? [];
+const aktuelle = bearbeitenId ? alle.find((z) => z.id === bearbeitenId) : undefined;
+const eigene = darfEigene(m, def, aktuelle);
+const zeigeForm = (neu && schreiben) || Boolean(aktuelle);
+
+const fachFelder = def.felder.filter((f) => !f.system);
+const editierbar = (key: string): boolean => {
+  if (def.nurSystem) return false;
+  if (!aktuelle) return schreiben;
+  if (def.unveraenderbar) return false;
+  if (schreiben) return true;
+  return eigene && Boolean(def.eigene?.felder.includes(key));
+};
+const kannSpeichern = fachFelder.some((f) => editierbar(f.key));
+const nurFelder = !schreiben && eigene ? def.eigene?.felder.join(',') : '';
+
+// Bei gefilterter Party ist die Spalte „Veranstaltung“ überall gleich und fällt weg.
+const listenFelder = (Astro.props.spalten ?? fachFelder.filter((f) => f.liste !== false && !(vFilter && f.key === 'veranstaltung')).map((f) => f.key))
+  .map((k) => def.felder.find((f) => f.key === k))
+  .filter((f) => f !== undefined);
+
+const optionenV = veranstaltungAuswahl(lage);
+const namen = namenListe(lage);
+
+const basis = new URL(url);
+basis.searchParams.delete('bearbeiten');
+basis.searchParams.delete('neu');
+basis.searchParams.delete('ok');
+basis.searchParams.delete('fehler');
+const listeUrl = basis.pathname + basis.search;
+const zurueck = url.pathname + url.search.replace(/[?&](ok|fehler)=[^&]*/g, '');
+const link = (extra: Record<string, string>) => {
+  const u = new URL(basis);
+  for (const [k, v] of Object.entries(extra)) u.searchParams.set(k, v);
+  return u.pathname + u.search;
+};
+
+const storniert = new Set(alle.map((z) => String(z.storno ?? '')).filter(Boolean));
+const istStorniert = (z: Zeile) => storniert.has(z.id) || Boolean(z.storno);
+// Neue Einträge: Vorlage, sonst Standardwert; ein Feld „Datum“ startet mit heute.
+const startwert = (key: string) =>
+  aktuelle ? aktuelle[key] : (vorlage[key] ?? def.felder.find((f) => f.key === key)?.standard ?? (key === 'datum' ? heuteIso() : undefined));
+---
+
+<section class="space-y-5">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <p class="max-w-3xl text-sm text-fog-300">{def.beschreibung}</p>
+    <div class="flex flex-wrap items-center gap-2">
+      {
+        filterVeranstaltung && (
+          <form method="get" class="flex items-center gap-2">
+            <label class="sr-only" for={`filter-${def.key}`}>
+              Veranstaltung
+            </label>
+            <select id={`filter-${def.key}`} name="v" class="field !w-auto !py-2 text-sm" onchange="this.form.requestSubmit()">
+              <option value="">Alle Partys</option>
+              {optionenV.map((o) => (
+                <option value={o.wert} selected={o.wert === vFilter}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <noscript>
+              <button class="btn-ghost !px-3 !py-2 text-sm">Filtern</button>
+            </noscript>
+          </form>
+        )
+      }
+      <a href={`/intern/api/export/${def.key}`} class="btn-ghost !px-4 !py-2 text-sm">CSV</a>
+      {
+        schreiben && (
+          <a href={link({ neu: '1' })} class="btn-primary !px-4 !py-2 text-sm">
+            + {titelNeu}
+          </a>
+        )
+      }
+    </div>
+  </div>
+
+  {
+    zeigeForm && (
+      <div class="rounded-2xl border border-fog-700 bg-ink-800/80 p-5 shadow-2xl shadow-black/40 sm:p-6">
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <h2 class="text-display text-2xl text-white">
+            {aktuelle ? (kannSpeichern ? 'Bearbeiten' : 'Details') : `${def.titel}: neuer Eintrag`}
+          </h2>
+          <a href={listeUrl} class="text-sm text-fog underline decoration-fog-700 underline-offset-4 hover:text-white">
+            Schließen
+          </a>
+        </div>
+        <form method="post" action={`/intern/api/tabelle/${def.key}`} class="grid gap-4 sm:grid-cols-2">
+          <input type="hidden" name="_aktion" value="speichern" />
+          <input type="hidden" name="_id" value={aktuelle?.id ?? ''} />
+          <input type="hidden" name="_zurueck" value={zurueck} />
+          {nurFelder && <input type="hidden" name="_nur" value={nurFelder} />}
+          {fachFelder.map((f) => (
+            <FormFeld feld={f} wert={startwert(f.key)} aktiv={editierbar(f.key)} veranstaltungen={optionenV} />
+          ))}
+          {aktuelle && (
+            <p class="text-xs text-fog sm:col-span-2">
+              ID {aktuelle.id}
+              {aktuelle.erstellt && ` · erstellt ${String(aktuelle.erstellt).slice(0, 16).replace('T', ' ')}`}
+              {aktuelle.von && ` von ${aktuelle.von}`}
+              {aktuelle.geaendert && ` · geändert ${String(aktuelle.geaendert).slice(0, 16).replace('T', ' ')}`}
+            </p>
+          )}
+          {kannSpeichern && (
+            <div class="flex flex-wrap gap-3 sm:col-span-2">
+              <button type="submit" class="btn-primary">
+                Speichern
+              </button>
+              <a href={listeUrl} class="btn-ghost">
+                Abbrechen
+              </a>
+            </div>
+          )}
+        </form>
+        {aktuelle && schreiben && !def.unveraenderbar && !def.nurSystem && (
+          <form
+            method="post"
+            action={`/intern/api/tabelle/${def.key}`}
+            class="mt-4 border-t border-fog-800 pt-4"
+            onsubmit="return confirm('Diesen Eintrag wirklich löschen? Eine Kopie bleibt im Journal.')"
+          >
+            <input type="hidden" name="_aktion" value="loeschen" />
+            <input type="hidden" name="_id" value={aktuelle.id} />
+            <input type="hidden" name="_zurueck" value={listeUrl} />
+            <button type="submit" class="text-sm text-signal-300 underline decoration-signal/40 underline-offset-4 hover:text-white">
+              Eintrag löschen
+            </button>
+          </form>
+        )}
+        {aktuelle && schreiben && def.unveraenderbar && !istStorniert(aktuelle) && (
+          <form
+            method="post"
+            action={`/intern/api/tabelle/${def.key}`}
+            class="mt-4 border-t border-fog-800 pt-4"
+            onsubmit="return confirm('Gegenbuchung anlegen? Die Buchung bleibt sichtbar und wird ausgeglichen.')"
+          >
+            <input type="hidden" name="_aktion" value="storno" />
+            <input type="hidden" name="_id" value={aktuelle.id} />
+            <input type="hidden" name="_zurueck" value={listeUrl} />
+            <p class="mb-2 text-sm text-fog-300">Buchungen werden nicht geändert. Bei einem Fehler stornieren und neu buchen.</p>
+            <button type="submit" class="btn-ghost !px-4 !py-2 text-sm">
+              Stornieren
+            </button>
+          </form>
+        )}
+      </div>
+    )
+  }
+
+  <datalist id="ntgl-namen">
+    <option value="Alle"></option>
+    {namen.map((n) => <option value={n} />)}
+  </datalist>
+
+  {
+    zeilen.length === 0 ? (
+      <p class="rounded-2xl border border-dashed border-fog-700 p-8 text-center text-fog-300">{leer}</p>
+    ) : (
+      <div class="overflow-x-auto rounded-2xl border border-fog-800/80 bg-ink-800/50">
+        <table class="w-full min-w-[40rem] text-left text-sm">
+          <thead class="border-b border-fog-800 text-xs uppercase tracking-wider text-fog">
+            <tr>
+              {listenFelder.map((f) => (
+                <th scope="col" class:list={['px-4 py-3 font-medium', f.typ === 'geld' || f.typ === 'zahl' ? 'text-right' : '']}>
+                  {f.titel}
+                </th>
+              ))}
+              <th scope="col" class="px-4 py-3">
+                <span class="sr-only">Aktion</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-fog-800/70">
+            {zeilen.map((z) => (
+              <tr class:list={['transition hover:bg-ink-700/50', z.id === bearbeitenId && 'bg-ink-700/60', istStorniert(z) && 'opacity-55']}>
+                {listenFelder.map((f, i) => (
+                  <td
+                    class:list={[
+                      'px-4 py-3 align-top',
+                      f.typ === 'geld' || f.typ === 'zahl' ? 'text-right tabular-nums' : '',
+                      i === 0 ? 'font-medium text-white' : 'text-fog-100',
+                    ]}
+                  >
+                    {istStatusFeld(f) && z[f.key] ? (
+                      <Marke text={String(z[f.key])} />
+                    ) : f.typ === 'link' && z[f.key] ? (
+                      <a href={String(z[f.key])} target="_blank" rel="noopener noreferrer" class="underline decoration-fog-700 underline-offset-4 hover:text-white">
+                        öffnen ↗
+                      </a>
+                    ) : f.typ === 'janein' ? (
+                      z[f.key] === true ? <Marke text="ja" ton="gut" /> : <span class="text-fog">–</span>
+                    ) : (
+                      <span class:list={[f.key === 'art' && z[f.key] === 'Ausgabe' && 'text-fog-300']}>
+                        {f.key === 'betrag' && z.art === 'Ausgabe' ? '−' : ''}
+                        {anzeigen(f, z[f.key], lage)}
+                      </span>
+                    )}
+                    {i === 0 && istStorniert(z) && <span class="ml-2 text-xs text-fog">(storniert)</span>}
+                  </td>
+                ))}
+                <td class="px-4 py-3 text-right">
+                  <a href={link({ bearbeiten: z.id })} class="text-xs text-fog underline decoration-fog-700 underline-offset-4 hover:text-white">
+                    {schreiben && !def.unveraenderbar ? 'Bearbeiten' : 'Details'}
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+</section>

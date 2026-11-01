@@ -1,0 +1,85 @@
+---
+import Intern from '../../../layouts/Intern.astro';
+import Karte from '../../../components/intern/Karte.astro';
+import Marke from '../../../components/intern/Marke.astro';
+import { ladeLage } from '../../../lib/intern/daten';
+import { datumKurz, euro, heuteIso } from '../../../lib/intern/format';
+import { darf } from '../../../lib/intern/rollen';
+
+export const prerender = false;
+
+const m = Astro.locals.mitglied!;
+const lage = await ladeLage();
+const jahr = Astro.url.searchParams.get('jahr') || heuteIso().slice(0, 4);
+const beitrag = Number(lage.einstellungen.mitgliedsbeitrag);
+const festgelegt = Number.isFinite(beitrag) && beitrag > 0;
+const zahlungen = lage.t.buchungen.filter((b) => b.kategorie === 'Mitgliedsbeitrag' && String(b.datum).startsWith(jahr) && !b.storno);
+const zeilen = lage.t.mitglieder
+  .filter((x) => String(x.status || 'aktiv') !== 'ausgetreten')
+  .map((x) => {
+    const schl = [String(x.name).toLowerCase(), String(x.email).toLowerCase()];
+    const eigene = zahlungen.filter((b) => schl.includes(String(b.mitglied ?? '').toLowerCase()));
+    const summe = eigene.reduce((a, b) => a + (typeof b.betrag === 'number' ? b.betrag : 0), 0);
+    return { name: String(x.name), status: String(x.status || 'aktiv'), summe, zuletzt: eigene.map((b) => String(b.datum)).sort().at(-1) };
+  })
+  .sort((a, b) => a.name.localeCompare(b.name, 'de'));
+const gesamt = zahlungen.reduce((a, b) => a + (typeof b.betrag === 'number' ? b.betrag : 0), 0);
+const iban = lage.einstellungen.iban;
+---
+
+<Intern titel="Beiträge" untertitel={`Mitgliedsbeiträge ${jahr}. Gebucht wird im Kassabuch mit Kategorie „Mitgliedsbeitrag“ und dem Namen im Feld „Mitglied“.`}>
+  <div class="grid gap-4 sm:grid-cols-3">
+    <Karte titel="Beitrag je Jahr" link={darf(m, 'einstellungen.schreiben') ? '/intern/verwaltung/einstellungen' : undefined} linkText="Ändern">
+      <p class="text-display text-4xl text-white">{festgelegt ? euro(beitrag) : 'offen'}</p>
+      <p class="mt-1 text-sm text-fog-300">{festgelegt ? 'laut Einstellungen' : 'Höhe beschließt die Mitgliederversammlung'}</p>
+    </Karte>
+    <Karte titel={`Eingegangen ${jahr}`}>
+      <p class="text-display text-4xl text-white">{euro(gesamt)}</p>
+      <p class="mt-1 text-sm text-fog-300">{zahlungen.length} Zahlungen</p>
+    </Karte>
+    <Karte titel="Einzahlen">
+      <p class="text-sm text-fog-300">
+        {iban ? 'Die Zahlungsdaten (Konto, Verwendungszweck „Mitgliedsbeitrag ' + jahr + ' + Name“) schickt Kassier:in per E-Mail.' : 'Noch kein Vereinskonto. Bis dahin bar an Kassier:in, mit Buchung im Kassabuch.'}
+      </p>
+      <p class="mt-2 text-xs text-fog">
+        Zahlungsaufforderungen stehen bewusst nicht auf der Website: Auf dem Vercel-Hobby-Tarif gilt das als kommerzielle Nutzung (Recherche Konto, 30.10.2026).
+      </p>
+    </Karte>
+  </div>
+
+  <div class="mt-6 overflow-x-auto rounded-2xl border border-fog-800/80 bg-ink-800/50">
+    <table class="w-full min-w-[32rem] text-left text-sm">
+      <thead class="border-b border-fog-800 text-xs uppercase tracking-wider text-fog">
+        <tr>
+          <th class="px-4 py-3 font-medium">Mitglied</th>
+          <th class="px-4 py-3 font-medium">Status</th>
+          <th class="px-4 py-3 text-right font-medium">Bezahlt {jahr}</th>
+          <th class="px-4 py-3 font-medium">Zuletzt</th>
+          <th class="px-4 py-3 font-medium">Beitrag</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-fog-800/70">
+        {
+          zeilen.map((z) => (
+            <tr>
+              <td class="px-4 py-2 font-medium text-white">{z.name}</td>
+              <td class="px-4 py-2"><Marke text={z.status} /></td>
+              <td class="px-4 py-2 text-right tabular-nums">{euro(z.summe)}</td>
+              <td class="px-4 py-2 text-fog-300">{z.zuletzt ? datumKurz(z.zuletzt) : '–'}</td>
+              <td class="px-4 py-2">
+                {!festgelegt ? <span class="text-fog">–</span> : z.summe >= beitrag ? <Marke text="bezahlt" ton="gut" /> : <Marke text="offen" ton="ernst" />}
+              </td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+  {
+    darf(m, 'finanzen.schreiben') && (
+      <a href="/intern/finanzen/kassabuch?neu=1" class="btn-primary mt-5 !px-4 !py-2 text-sm">
+        + Beitrag buchen
+      </a>
+    )
+  }
+</Intern>

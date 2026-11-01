@@ -1,0 +1,146 @@
+---
+import Intern from '../../../layouts/Intern.astro';
+import Karte from '../../../components/intern/Karte.astro';
+import Marke from '../../../components/intern/Marke.astro';
+import { ladeLage, naechsteVeranstaltung, veranstaltungAuswahl, veranstaltungNach, veranstaltungLabel, kapazitaet } from '../../../lib/intern/daten';
+import { datumKurz, prozent, tageBis, zeitstempel } from '../../../lib/intern/format';
+import { darf } from '../../../lib/intern/rollen';
+
+export const prerender = false;
+
+const m = Astro.locals.mitglied!;
+const lage = await ladeLage();
+const q = Astro.url.searchParams;
+const nx = naechsteVeranstaltung(lage);
+const v = q.has('v') ? (q.get('v') ?? '') : nx ? String(nx.datum) : '';
+// Gästedaten (Namen, Adressen) nur für Vorstand und den Bereich Einlass & Kassa
+const personen = darf(m, 'personen.sehen') || m.bereiche.includes('Einlass & Kassa');
+
+const proParty = new Map<string, { label: string; anzahl: number; newsletter: number; mehrfach: number }>();
+for (const a of lage.anmeldungen) {
+  const k = a.datum || a.label || '–';
+  const e = proParty.get(k) ?? { label: a.label, anzahl: 0, newsletter: 0, mehrfach: 0 };
+  e.anzahl++;
+  if (a.newsletter) e.newsletter++;
+  proParty.set(k, e);
+}
+for (const [k, e] of proParty) {
+  const mails = lage.anmeldungen.filter((a) => (a.datum || a.label || '–') === k).map((a) => a.email);
+  e.mehrfach = mails.length - new Set(mails).size;
+}
+const istDatum = (k: string) => /^\d{4}-\d{2}-\d{2}$/.test(k);
+const parteien = [...proParty.entries()]
+  .sort((a, b) => b[0].localeCompare(a[0]))
+  .map(([k, e]) => ({ k, ...e, titel: istDatum(k) ? veranstaltungLabel(veranstaltungNach(lage, k), k) : e.label || '–' }));
+const liste = lage.anmeldungen.filter((a) => (v ? a.datum === v : true)).sort((a, b) => a.name.localeCompare(b.name, 'de'));
+const gewaehlt = v ? veranstaltungNach(lage, v) : undefined;
+const kap = kapazitaet(lage, gewaehlt);
+const ueberFrist = lage.anmeldungen.filter((a) => a.datum && !a.newsletter && tageBis(a.datum) < -30);
+---
+
+<Intern titel="Anmeldungen" untertitel="Gästeliste aus dem Anmeldeformular auf ntgl.at (Google Sheet „NTGL Anmeldungen“).">
+  {lage.anmeldungenFehler && <p class="mb-4 rounded-xl bg-signal/20 px-4 py-3 text-sm text-white">Anmeldungen nicht lesbar: {lage.anmeldungenFehler}</p>}
+
+  <div class="grid gap-4 lg:grid-cols-3">
+    <Karte titel="Je Party" class="lg:col-span-2">
+      {
+        parteien.length ? (
+          <table class="w-full text-left text-sm">
+            <thead class="text-xs uppercase tracking-wider text-fog">
+              <tr>
+                <th class="py-2 font-medium">Party</th>
+                <th class="py-2 text-right font-medium">Anmeldungen</th>
+                <th class="py-2 text-right font-medium">Newsletter</th>
+                <th class="py-2 text-right font-medium">doppelt</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-fog-800/70">
+              {parteien.map((e) => (
+                <tr>
+                  <td class="py-2">
+                    <a href={`?v=${encodeURIComponent(e.k)}`} class="text-fog-100 hover:text-white hover:underline">
+                      {e.titel}
+                    </a>
+                  </td>
+                  <td class="py-2 text-right tabular-nums text-white">{e.anzahl}</td>
+                  <td class="py-2 text-right tabular-nums">{e.newsletter} <span class="text-fog">({prozent(e.newsletter / e.anzahl)})</span></td>
+                  <td class="py-2 text-right tabular-nums">{e.mehrfach}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p class="text-sm text-fog-300">Noch keine Anmeldungen.</p>
+        )
+      }
+    </Karte>
+    <Karte titel="Datenschutz">
+      <p class="text-sm text-fog-300">
+        Laut Datenschutzerklärung werden Anmeldungen 30 Tage nach der Party gelöscht, außer bei Newsletter-Einwilligung.
+      </p>
+      <p class="mt-3 text-sm text-white">
+        {ueberFrist.length ? `${ueberFrist.length} Anmeldungen sind über der Frist.` : 'Nichts über der Frist.'}
+      </p>
+      {
+        ueberFrist.length > 0 && darf(m, 'personen.sehen') && (
+          <form method="post" action="/intern/api/anmeldungen-loeschen" class="mt-4" onsubmit="return confirm('Diese Anmeldungen endgültig aus dem Sheet löschen? Das lässt sich nicht rückgängig machen.')">
+            <button class="btn-ghost !px-4 !py-2 text-sm" type="submit">
+              {ueberFrist.length} löschen
+            </button>
+          </form>
+        )
+      }
+    </Karte>
+  </div>
+
+  <section class="mt-6">
+    <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+      <h2 class="text-display text-3xl text-white">
+        {gewaehlt ? veranstaltungLabel(gewaehlt) : v ? datumKurz(v) : 'Alle Anmeldungen'}
+        <span class="text-fog"> · {liste.length}{kap && v ? ` / ${kap}` : ''}</span>
+      </h2>
+      <form method="get" class="flex items-center gap-2">
+        <label class="sr-only" for="v">Party</label>
+        <select id="v" name="v" class="field !w-auto !py-2 text-sm" onchange="this.form.requestSubmit()">
+          <option value="">Alle</option>
+          {veranstaltungAuswahl(lage).map((o) => <option value={o.wert} selected={o.wert === v}>{o.label}</option>)}
+        </select>
+      </form>
+    </div>
+    {
+      !personen ? (
+        <p class="rounded-2xl border border-dashed border-fog-700 p-6 text-sm text-fog-300">
+          Namen und Adressen sehen der Vorstand und wer den Bereich „Einlass & Kassa“ betreut.
+        </p>
+      ) : liste.length === 0 ? (
+        <p class="rounded-2xl border border-dashed border-fog-700 p-6 text-center text-sm text-fog-300">Keine Anmeldungen.</p>
+      ) : (
+        <div class="overflow-x-auto rounded-2xl border border-fog-800/80 bg-ink-800/50">
+          <table class="w-full min-w-[36rem] text-left text-sm print:text-black">
+            <thead class="border-b border-fog-800 text-xs uppercase tracking-wider text-fog">
+              <tr>
+                <th class="px-4 py-3 font-medium">Einlass</th>
+                <th class="px-4 py-3 font-medium">Name</th>
+                <th class="px-4 py-3 font-medium">E-Mail</th>
+                <th class="px-4 py-3 font-medium">Newsletter</th>
+                <th class="px-4 py-3 font-medium">Angemeldet</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-fog-800/70">
+              {liste.map((a) => (
+                <tr>
+                  <td class="px-4 py-2"><span class="inline-block h-4 w-4 rounded border border-fog-700" aria-hidden="true" /></td>
+                  <td class="px-4 py-2 font-medium text-white">{a.name}</td>
+                  <td class="px-4 py-2 text-fog-300">{a.email}</td>
+                  <td class="px-4 py-2">{a.newsletter ? <Marke text="ja" ton="gut" /> : <span class="text-fog">–</span>}</td>
+                  <td class="px-4 py-2 text-fog-300">{zeitstempel(a.zeit)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+    {personen && liste.length > 0 && <p class="mt-3 text-xs text-fog">Zum Ausdrucken als Türliste: Strg+P (Spalte „Einlass“ zum Abhaken).</p>}
+  </section>
+</Intern>

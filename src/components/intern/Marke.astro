@@ -1,0 +1,16 @@
+---
+import { TON_STIL, ton as tonVon, type Ton } from '../../lib/intern/anzeige';
+
+interface Props {
+  text: string;
+  ton?: Ton;
+}
+const { text } = Astro.props;
+const t = Astro.props.ton ?? tonVon(text);
+const stil = TON_STIL[t];
+---
+
+<span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-fog-800 bg-ink px-2 py-0.5 text-xs text-fog-100">
+  <span aria-hidden="true" class="font-bold" style={`color:${stil.farbe}`}>{stil.symbol}</span>
+  {text}
+</span>

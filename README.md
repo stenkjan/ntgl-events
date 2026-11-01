@@ -65,6 +65,25 @@ Ist keines von beiden konfiguriert, bekommt die Person eine ehrliche Fehlermeldu
 1. Domain `ntgl.at` in Resend anlegen, die angezeigten DNS-Einträge (DKIM, SPF/MX für `send.ntgl.at`) beim DNS-Anbieter setzen.
 2. API-Key erzeugen → `RESEND_API_KEY`; Absender z. B. `NTGL <anmeldung@ntgl.at>` → `MAIL_FROM`.
 
+## Mitgliederbereich `/intern`
+
+Login nur für eingetragene Mitglieder, per Link aus einer Mail (kein Passwort). Die öffentliche Seite bleibt statisch und bekommt davon nichts mit; Cookie und Seiten liegen nur unter `/intern`, `robots.txt` sperrt den Pfad.
+
+- **Daten:** Google Sheet „NTGL Verein Daten“ im Drive-Ordner NTGL (`INTERN_SHEET_ID`). Jedes Blatt ist eine Tabelle (Mitglieder, Veranstaltungen, Line-up, Dienstplan, Aufgaben, Equipment, Kassabuch, Budget, Abendkassa, Beschlüsse, Verein, Galerie, Einstellungen, Journal, Freigaben). Das Datenmodell steht in `src/lib/intern/schema.ts`; „Einstellungen → Tabelle prüfen und einrichten“ legt fehlende Blätter und Spalten an.
+- **Rollen:** Obmann/Obfrau, Kassier:in, Schriftführer:in (die drei Hauptrollen) und Mitglied, dazu Arbeitsbereiche mit Schreibrecht für ihre Tabellen (`src/lib/intern/rollen.ts`). `INTERN_ADMIN_EMAILS` gibt einen Startzugang mit vollen Rechten.
+- **Menü:** Übersicht (Kennzahlen, Vorschläge, Countdown) · Daten (Anmeldungen, Mitglieder, Historie, Journal) · Finanzen (Kassabuch mit Storno, Budget mit Vorschlägen aus dem Archiv, Beiträge, Abendkassa) · Galerie (Fotos aus Drive) · Verwaltung (Planung, Line-up, Dienstplan, Rollen & Aufgaben, Equipment, Beschlüsse, Verein, Website, Einstellungen).
+- **Vorschläge:** `src/lib/intern/auswertung.ts` prüft Regeln gegen die Daten und nennt Begründung und Link. Pflichtschritte je Party (Lokal, Behörde, AKM, Sicherheit, Aushänge, Team) stehen als Aufgaben mit Präfix („Behörde: …“) und erscheinen im Countdown.
+- **Journal:** Jede Änderung landet im Blatt „Journal“; gelöschte Zeilen als Kopie. Buchungen werden nie geändert, nur storniert.
+
+### Website aus dem Mitgliederbereich steuern
+
+1. Party unter Verwaltung → Planung mit „Auf Website“ markieren, Line-up-Zeilen ebenso, Flyer und Fotos in der Galerie wählen.
+2. Verwaltung → Website zeigt die Vorschau; „Veröffentlichen“ schreibt eine Freigabe (Version) ins Blatt „Freigaben“ und ruft `DEPLOY_HOOK_URL` auf.
+3. Der Build liest nur die jüngste Freigabe (`src/lib/website.ts`) und überschreibt damit die Markdown-Datei derselben Party; Partys nur aus der Freigabe werden ergänzt. Bilder liefert `/media/<Drive-ID>` aus, aber nur, wenn sie in der Freigabe stehen.
+4. Ein täglicher Vercel-Cron (`/api/cron/taeglich`, eingetragen in `astro.config.mjs`) baut nur neu, wenn sich die gezeigte Party durch das Datum ändert oder eine neuere Freigabe existiert. Inhalte veröffentlicht er nie selbst.
+
+Einrichtung auf Vercel: `INTERN_SHEET_ID`, `AUTH_SECRET`, `INTERN_ADMIN_EMAILS`, `DEPLOY_HOOK_URL`, `CRON_SECRET` setzen (siehe `.env.example`), Deploy Hook für `main` anlegen, die Galerie-Ordner-ID unter Einstellungen eintragen und den Ordner für den Service-Account als Betrachter freigeben.
+
 ## Entwicklung
 
 ```bash

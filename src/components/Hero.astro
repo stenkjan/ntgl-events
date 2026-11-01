@@ -1,8 +1,8 @@
 ---
-import { formatDate, formatMonth, isoDate, type EventEntry } from '../lib/events';
+import { formatDate, formatMonth, isoDate, type EventData } from '../lib/events';
 
 interface Props {
-  event: EventEntry;
+  event: { data: EventData };
   isPast: boolean;
 }
 const { event, isPast } = Astro.props;
