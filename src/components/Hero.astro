@@ -20,13 +20,11 @@ const registration = isPast ? 'closed' : d.registration;
         class="mb-5 inline-flex items-center gap-2 rounded-full border border-fog-700 bg-ink-800/70 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-fog"
       >
         <span class="h-1.5 w-1.5 rounded-full bg-signal"></span>
-        {isPast ? 'Letzte Party' : 'Nächste Party'}
+        {d.title}
       </p>
 
-      <h1
-        class="text-display text-[2.6rem] text-white [overflow-wrap:anywhere] sm:text-7xl lg:text-6xl xl:text-7xl 2xl:text-8xl"
-      >
-        {d.title}
+      <h1 class="text-display text-[2.6rem] text-white sm:text-7xl lg:text-6xl xl:text-7xl 2xl:text-8xl">
+        {isPast ? 'Last Event' : 'Next Event'}
       </h1>
       {d.subtitle && <p class="text-display mt-2 text-3xl text-fog sm:text-4xl">{d.subtitle}</p>}
 

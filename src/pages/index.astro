@@ -21,7 +21,7 @@ const bilder = (freigabe?.bilder ?? []).slice(0, 12);
 const eventLabel = event
   ? `${event.data.title}${event.data.dateConfirmed ? ` (${formatDateShort(event.data.date)})` : ''}`
   : 'NTGL';
-const title = event ? `${event.data.title} | NTGL` : 'NTGL';
+const title = event ? `${isPast ? 'LAST EVENT' : 'UPCOMING'} | NTGL` : 'NTGL';
 const description = event
   ? `${event.data.title}${event.data.subtitle ? `, ${event.data.subtitle}` : ''} im ${event.data.location.name}, ${event.data.location.address}. Anmeldung verpflichtend.`
   : undefined;
